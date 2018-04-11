@@ -1,40 +1,34 @@
-"""A postprocessor for saving and loading a mesh, meshfunctions and functions for hdf5."""
+"""An interface for saving a `Field` as hdf5."""
 
 import dolfin
 import logging
 import yaml
+
+from .baseclass import PostProcessorBaseClass
 
 from xalpost.spec import (
     PostProcessorSpec,
     FieldSpec,
 )
 
-from xalpost.post import (
-    Field,
-)
-
 from pathlib import Path
 
 from typing import (
     Dict,
-    Namedtuple,
-    Any,
 )
 
 
-LOGGER = logging.getLogger(__name__)
+logger  = logging.getLogger(__name__)
 
 
-class PostProcessor:
-    """Class for file I/O."""
+class Saver(PostProcessorBaseClass):
+    """Class for saving stuff."""
 
     def __init__(self, spec: PostProcessorSpec) -> None:
-        """Stor and process specifications."""
-        self.spec = spec
-        self._casedir = Path(spec.casedir)
-        self._fields = {}
-        self._time_list = []
-        self._first_compute = True
+        """Store saver specifications."""
+        super().__init__()
+        self._time_list = []            # Keep track of time points
+        self._first_compute = True      # Perform special action after before first save
 
     def store_mesh(
             self,
@@ -50,35 +44,6 @@ class PostProcessor:
                 meshfile.write(cell_domains, "CellDomains")
             if facet_domains is not None:
                 meshfile.write(facet_domains, "FacetDomains")
-
-    def load_mesh(self) -> dolfin.mesh:
-        """Load and return the mesh.
-
-        Will also return cell and facet functions if present.
-        """
-        filename = calsedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as meshfile:
-            mesh = dolfin.Mesh()
-            meshfile.read(mesh, "/Mesh", False)
-        return mesh
-
-    def load_mesh_function(self, name: str) -> dolfin.MeshFunction:
-        """Lead and return a mesh function.
-
-        There are two options, 'CellDomains' or 'FacetDomains'. Both are stored in
-        'mesh.hdf5'.
-
-        Arguments:
-            name: Either 'CellDomains' or 'FacetDomains'.
-        """
-        msg = "Meshfunctions are stored as 'CellDomains' or 'FacetDomains'."
-        assert name in ("CellDomains", "FacetDomains"), msg
-
-        filename = calsedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as meshfile:
-            mesh_function = dolfin.MeshFunction()
-            meshfile.read(mesh, f"/{name}")
-        return mesh_function
 
     def store_field(self, function: dolfin.Function, timestep: int) -> None:
         """Save the function, and cellfunction and facet function if provided."""
@@ -113,39 +78,6 @@ class PostProcessor:
         assert field.name not in self._fields, msg 
         self._fields[field.name] = field
 
-    def load_metadata(self, name) -> Dict[str, str]:
-        """Read the metadata associated with a field name."""
-        field = self._fields[name]
-        with open(self.casedir/Path(f"{name}/{name}.yaml"), "r") as in_handle:
-            return yaml.load(in_handle)
-
-    def load_field(self, name: str) -> None:
-        """Return an iterator over the field for each timestep."""
-        field = self._fields[name]
-        metadata = self.load_metadata(name)
-
-        time_array = self.get_time()
-        mesh = self.load_mesh()
-
-        element = dolfin.FiniteElement(     # FIXME: What about vector elements?
-            metadata["element_family"],
-            metadata["element_cell"],
-            metadata["element_degree"]
-        )
-        V = dolfin.FunctionSpace(mesh, element)
-        v = Function(V)
-
-        filename = self.casedir/Path(f"{name}/{name}.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as fieldfile:
-            for i, t in enumerate(time_array):
-                fieldfile.read(v, "/{name}{i}")
-                yield t, v
-
-    @property
-    def casedir(self) -> Path:
-        """Return the casedir."""
-        return self._casedir
-
     def update(
             self,
             field_dict[str, dolfin.Function],
@@ -177,9 +109,3 @@ class PostProcessor:
         """Store the times."""
         filename = self.casedir/Path("times.npy")
         np.save(filename, np.asarray(self._time_list)) 
-
-    def get_time(self) -> np.ndarray:
-        """Return the times."""
-        filename = self.casedir/Path("times.npy")
-        assert filename.isfile(), f"Cannot find {filename}"
-        return np.load(filename)

@@ -1,5 +1,4 @@
-"""A postprocessor for saving and loading a mesh, meshfunctions and functions for hdf5."""
-
+"""Load a casedir."""
 import dolfin
 import logging
 import yaml
@@ -17,39 +16,14 @@ from pathlib import Path
 
 from typing import (
     Dict,
-    Namedtuple,
-    Any,
 )
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
-class PostProcessor:
-    """Class for file I/O."""
-
-    def __init__(self, spec: PostProcessorSpec) -> None:
-        """Stor and process specifications."""
-        self.spec = spec
-        self._casedir = Path(spec.casedir)
-        self._fields = {}
-        self._time_list = []
-        self._first_compute = True
-
-    def store_mesh(
-            self,
-            mesh: dolfin.Mesh,
-            cell_domain: dolfin.MeshFunction = None,
-            facet_domain: dolfin.MeshFunction = None
-    ) -> None:
-        """Save the mesh, and cellfunction and facet function if provided."""
-        filename = casedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "w") as meshfile:
-            meshfile.write(mesh, "Mesh")
-            if cell_domains is not None:
-                meshfile.write(cell_domains, "CellDomains")
-            if facet_domains is not None:
-                meshfile.write(facet_domains, "FacetDomains")
+class Loader:
+    """Read stuff."""
 
     def load_mesh(self) -> dolfin.mesh:
         """Load and return the mesh.
@@ -79,39 +53,6 @@ class PostProcessor:
             mesh_function = dolfin.MeshFunction()
             meshfile.read(mesh, f"/{name}")
         return mesh_function
-
-    def store_field(self, function: dolfin.Function, timestep: int) -> None:
-        """Save the function, and cellfunction and facet function if provided."""
-        filename = casedir/Path("{name}/{name}.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "w") as fieldfile:
-            if not datafile.has_dataset("Mesh"):
-                fieldfile.write(data.function_space().mesh(), "Mesh")
-                datafile.write(data, f"{name}{timestep}")
-
-    def store_metadata(
-            self,
-            name: str,
-            spec: Dict[Any Any],
-            default_flow_style: bool = False
-    ) -> None:
-        """Save spec as {name}.yaml.
-
-        `name` is converted to a `Path` and save relative to `self.casedir`.
-
-        Arguments:
-            name: Name of yaml file.
-            spec: Anything compatible with pyaml. It is converted to yaml and dumped.
-            default_flow_style: use default_flow_style.
-        """
-        filename = self.casedir/Path(f"{name}.yaml")
-        with open(filename, "w") as out_handle:
-            yaml.dump(spec, out_handle, default_flow_style=default_flow_style)
-
-    def add_field(self, field: Field) -> None:
-        """Add a field to the postprocessor."""
-        msg = f"A field with name {field.name} already exists."
-        assert field.name not in self._fields, msg 
-        self._fields[field.name] = field
 
     def load_metadata(self, name) -> Dict[str, str]:
         """Read the metadata associated with a field name."""
@@ -172,11 +113,6 @@ class PostProcessor:
                 )
 
         self._time_list.append(time)
-
-    def finalise(self) -> None:
-        """Store the times."""
-        filename = self.casedir/Path("times.npy")
-        np.save(filename, np.asarray(self._time_list)) 
 
     def get_time(self) -> np.ndarray:
         """Return the times."""
