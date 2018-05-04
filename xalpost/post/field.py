@@ -1,44 +1,40 @@
-"""A wrapper around dolfin Functions used for the `PostProcessor`."""
-
-import dolfin
 import logging
+import dolfin 
+
+from pathlib import Path
 
 from xalpost.spec import (
     FieldSpec,
 )
 
-LOGGER = logging.getLogger(__name__)
+from . import store_metadata
+
+from typing import (
+    List,
+    Dict,
+    Any,
+)
+
+from .field_base import FieldBaseClass
 
 
-class Field:
-    """A wrapper around dolfin Functions used for the `PostProcessor`."""
+class Field(FieldBaseClass):
+    """
+    This class should allow specification of time plots over a point, averages, and other 
+    statistics.
 
-    def  __init__(self, name: str, spec: FieldSpec):
-        """Store name and spec.
+    ## Idea
+    Create a  plot over time class that allows for an (several) operation(s) on the
+    function before saving.
 
-        Args:
-            name: Name of the field.
-            spec: Specifications for the field.
-        """
-        self._name = name
-        self._spec = spec
-        self._first_compute = True
+    ## Idea:
+    Allow for snapshots of a function
 
-    @property
-    def name(self) -> str:
-        """Field name."""
-        return self._name
+    ## Idea:
+    Crrate an interface for making configurable nice plots
 
-    @property
-    def spec(self) -> FieldSpec:
-        """Field spec."""
-        return self._spec
+    ## Idea
+    See what cbcpost did.
+    """
 
-    @property
-    def first_compute(self) -> bool:
-        """Metadata is stored."""
-        return self._first_compute
-
-    @first_compute.setter
-    def first_compute(self, b) -> None:
-        self._first_compute = b
+    pass

@@ -68,11 +68,7 @@ class Loader:
         time_array = self.get_time()
         mesh = self.load_mesh()
 
-        element = dolfin.FiniteElement(     # FIXME: What about vector elements?
-            metadata["element_family"],
-            metadata["element_cell"],
-            metadata["element_degree"]
-        )
+        element = eval(spec["element"])     # Let us hopw this does not go wring
         V = dolfin.FunctionSpace(mesh, element)
         v = Function(V)
 

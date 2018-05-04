@@ -80,66 +80,12 @@ class PostProcessor:
             meshfile.read(mesh, f"/{name}")
         return mesh_function
 
-    def store_field(self, function: dolfin.Function, timestep: int) -> None:
-        """Save the function, and cellfunction and facet function if provided."""
-        filename = casedir/Path("{name}/{name}.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "w") as fieldfile:
-            if not datafile.has_dataset("Mesh"):
-                fieldfile.write(data.function_space().mesh(), "Mesh")
-                datafile.write(data, f"{name}{timestep}")
-
-    def store_metadata(
-            self,
-            name: str,
-            spec: Dict[Any Any],
-            default_flow_style: bool = False
-    ) -> None:
-        """Save spec as {name}.yaml.
-
-        `name` is converted to a `Path` and save relative to `self.casedir`.
-
-        Arguments:
-            name: Name of yaml file.
-            spec: Anything compatible with pyaml. It is converted to yaml and dumped.
-            default_flow_style: use default_flow_style.
-        """
-        filename = self.casedir/Path(f"{name}.yaml")
-        with open(filename, "w") as out_handle:
-            yaml.dump(spec, out_handle, default_flow_style=default_flow_style)
-
     def add_field(self, field: Field) -> None:
         """Add a field to the postprocessor."""
         msg = f"A field with name {field.name} already exists."
         assert field.name not in self._fields, msg 
+        field.path = self._casedir
         self._fields[field.name] = field
-
-    def load_metadata(self, name) -> Dict[str, str]:
-        """Read the metadata associated with a field name."""
-        field = self._fields[name]
-        with open(self.casedir/Path(f"{name}/{name}.yaml"), "r") as in_handle:
-            return yaml.load(in_handle)
-
-    def load_field(self, name: str) -> None:
-        """Return an iterator over the field for each timestep."""
-        field = self._fields[name]
-        metadata = self.load_metadata(name)
-
-        time_array = self.get_time()
-        mesh = self.load_mesh()
-
-        element = dolfin.FiniteElement(     # FIXME: What about vector elements?
-            metadata["element_family"],
-            metadata["element_cell"],
-            metadata["element_degree"]
-        )
-        V = dolfin.FunctionSpace(mesh, element)
-        v = Function(V)
-
-        filename = self.casedir/Path(f"{name}/{name}.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as fieldfile:
-            for i, t in enumerate(time_array):
-                fieldfile.read(v, "/{name}{i}")
-                yield t, v
 
     @property
     def casedir(self) -> Path:
@@ -148,30 +94,14 @@ class PostProcessor:
 
     def update(
             self,
-            field_dict[str, dolfin.Function],
             time: float,
             timestep: int
+            data_dict: Dict[str, Function]
     ) -> None:
         """Store solutions and perform computations for new timestep."""
-        for name in field_dict:
-            spec = self._fields[name].spec
-            if spec.stride_timestep % int(timestep) and sepc.start_timestep >= timestep:
-                if field.first_compute:     # Store metadata if not already done
-                    spec_dict = spec._asdict() 
-                    element = field_dict[name].function_space().ufl_element()
-                    spec_dict["element_family"] = str(element.family())
-                    spec_dict["element_cell"] = str(element.cell())
-                    spec_dict["element_degree"] = str(element.degree())
-                    name = f"{name}/{name}"
-                    self.store_metadata(name, spec_dict)
-                    field.first_compute = False
-
-                self.store_field(
-                    field_dict[name],
-                    timestep,
-                )
-
-        self._time_list.append(time)
+        self._time_list.append(time)    # This time array has to be sent to each field
+        for name, data in data_dict.items():
+            field.update(timestep, data)
 
     def finalise(self) -> None:
         """Store the times."""

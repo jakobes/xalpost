@@ -1,5 +1,7 @@
 """A baseclass for all file I/O."""
 
+import logging
+
 from xalpost.spec import (
     PostProcessorSpec,
 )
@@ -7,8 +9,14 @@ from xalpost.spec import (
 from pathlib import Path
 
 
+LOGGER = logging.getLogger(__name__)
+
+
 class PostProcessorBaseClass:
+    """Baseclass for post processors."""
+
     def __init__(self, spec: PostProcessorSpec) -> None:
+        """Store parameters."""
         self._spec = spec
         self._casedir = Path(spec.casedir)
 
@@ -16,4 +24,3 @@ class PostProcessorBaseClass:
     def casedir(self) -> Path:
         """Return the casedir."""
         return self._casedir
-
