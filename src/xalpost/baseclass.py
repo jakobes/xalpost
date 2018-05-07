@@ -2,7 +2,7 @@
 
 import logging
 
-from xalpost.spec import (
+from postspec import (
     PostProcessorSpec,
 )
 

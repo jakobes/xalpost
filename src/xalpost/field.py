@@ -3,11 +3,11 @@ import dolfin
 
 from pathlib import Path
 
-from xalpost.spec import (
+from postspec import (
     FieldSpec,
 )
 
-from . import store_metadata
+from .utils import store_metadata
 
 from typing import (
     List,
@@ -36,5 +36,4 @@ class Field(FieldBaseClass):
     ## Idea
     See what cbcpost did.
     """
-
     pass

@@ -2,14 +2,15 @@
 
 import dolfin
 import logging
-import yaml
 
-from xalpost.spec import (
+import numpy as np
+
+from postspec import (
     PostProcessorSpec,
     FieldSpec,
 )
 
-from xalpost.post import (
+from xalpost import (
     Field,
 )
 
@@ -17,7 +18,6 @@ from pathlib import Path
 
 from typing import (
     Dict,
-    Namedtuple,
     Any,
 )
 
@@ -39,17 +39,17 @@ class PostProcessor:
     def store_mesh(
             self,
             mesh: dolfin.Mesh,
-            cell_domain: dolfin.MeshFunction = None,
-            facet_domain: dolfin.MeshFunction = None
+            cell_domains: dolfin.MeshFunction = None,
+            facet_domains: dolfin.MeshFunction = None
     ) -> None:
         """Save the mesh, and cellfunction and facet function if provided."""
-        filename = casedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "w") as meshfile:
-            meshfile.write(mesh, "Mesh")
+        filename = self.casedir/Path("mesh.hdf5")
+        with dolfin.HDF5File(mesh.mpi_comm(), str(filename), "w") as meshfile:
+            meshfile.write(mesh, "/Mesh")
             if cell_domains is not None:
-                meshfile.write(cell_domains, "CellDomains")
+                meshfile.write(cell_domains, "/CellDomains")
             if facet_domains is not None:
-                meshfile.write(facet_domains, "FacetDomains")
+                meshfile.write(facet_domains, "/FacetDomains")
 
     def load_mesh(self) -> dolfin.mesh:
         """Load and return the mesh.
@@ -95,18 +95,21 @@ class PostProcessor:
     def update(
             self,
             time: float,
-            timestep: int
-            data_dict: Dict[str, Function]
+            timestep: int,
+            data_dict: Dict[str, dolfin.Function]
     ) -> None:
         """Store solutions and perform computations for new timestep."""
         self._time_list.append(time)    # This time array has to be sent to each field
         for name, data in data_dict.items():
-            field.update(timestep, data)
+            self._fields[name].update(timestep, time, data)
 
     def finalise(self) -> None:
         """Store the times."""
-        filename = self.casedir/Path("times.npy")
+        filename = self.casedir/Path("times.npfunctiony")
         np.save(filename, np.asarray(self._time_list)) 
+        for _, field in self._fields.items():
+            field.finalise()
+
 
     def get_time(self) -> np.ndarray:
         """Return the times."""

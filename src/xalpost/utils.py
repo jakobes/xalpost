@@ -5,7 +5,7 @@ from typing import (
     Dict,
 )
 
-import pyyaml
+import yaml
 
 
 def store_metadata(
@@ -23,7 +23,7 @@ def store_metadata(
         default_flow_style: use default_flow_style.
     """
     with open(filepath, "w") as out_handle:
-        pyyaml.dump(meta_dict, out_handle, default_flow_style=default_flow_style)
+        yaml.dump(meta_dict, out_handle, default_flow_style=default_flow_style)
 
 
 def load_metadata(filepath) -> Dict[str, str]:
@@ -33,4 +33,7 @@ def load_metadata(filepath) -> Dict[str, str]:
         filepath: name of metadata  yaml file.
     """
     with open(filepath, "r") as in_handle:
-        return pyyaml.load(in_handle)
+        return yaml.load(in_handle)
+
+
+# def store_xdmf(name, data)

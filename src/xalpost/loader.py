@@ -3,14 +3,14 @@ import dolfin
 import logging
 import yaml
 
-from xalpost.spec import (
+import numpy as np
+
+from postspec import (
     PostProcessorSpec,
     FieldSpec,
 )
 
-from xalpost.post import (
-    Field,
-)
+from .field import Field
 
 from pathlib import Path
 
@@ -85,7 +85,7 @@ class Loader:
 
     def update(
             self,
-            field_dict[str, dolfin.Function],
+            field_dict: [str, dolfin.Function],
             time: float,
             timestep: int
     ) -> None:

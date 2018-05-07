@@ -6,7 +6,9 @@ import yaml
 
 from .baseclass import PostProcessorBaseClass
 
-from xalpost.spec import (
+from .field import Field
+
+from postspec import (
     PostProcessorSpec,
     FieldSpec,
 )
@@ -60,7 +62,7 @@ class Saver(PostProcessorBaseClass):
             self,
             time: float,
             timestep: int,
-            new_data: Dict[str, Function]
+            new_data: Dict[str, dolfin.Function]
     ) -> None:
         """Store solutions and perform computations for new timestep."""
         for field_name, data in new_data.items():
