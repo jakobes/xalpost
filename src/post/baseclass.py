@@ -19,6 +19,7 @@ class PostProcessorBaseClass:
         """Store parameters."""
         self._spec = spec
         self._casedir = Path(spec.casedir)
+        self._fields = {}               # Dict to check for duplicates
 
     @property
     def casedir(self) -> Path:

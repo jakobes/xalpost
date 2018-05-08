@@ -10,7 +10,7 @@ from postspec import (
     FieldSpec,
 )
 
-from xalpost import (
+from postfields import (
     Field,
 )
 
@@ -99,7 +99,7 @@ class PostProcessor:
             data_dict: Dict[str, dolfin.Function]
     ) -> None:
         """Store solutions and perform computations for new timestep."""
-        self._time_list.append(time)    # This time array has to be sent to each field
+        self._time_list.append(float(time))    # This time array has to be sent to each field
         for name, data in data_dict.items():
             self._fields[name].update(timestep, time, data)
 
@@ -109,7 +109,6 @@ class PostProcessor:
         np.save(filename, np.asarray(self._time_list)) 
         for _, field in self._fields.items():
             field.finalise()
-
 
     def get_time(self) -> np.ndarray:
         """Return the times."""

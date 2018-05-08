@@ -1,7 +1,7 @@
 """Load a casedir."""
+
 import dolfin
 import logging
-import yaml
 
 import numpy as np
 
@@ -10,16 +10,21 @@ from postspec import (
     FieldSpec,
 )
 
-from .field import Field
+from postutils import load_metadata
+
+from postfields import (
+    Field,
+)
 
 from pathlib import Path
 
 from typing import (
     Dict,
+    Any,
 )
 
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class Loader:
@@ -56,9 +61,7 @@ class Loader:
 
     def load_metadata(self, name) -> Dict[str, str]:
         """Read the metadata associated with a field name."""
-        field = self._fields[name]
-        with open(self.casedir/Path(f"{name}/{name}.yaml"), "r") as in_handle:
-            return yaml.load(in_handle)
+        return load_metadata(self.casedir/Path(f"{name}/{name}.yaml"))
 
     def load_field(self, name: str) -> None:
         """Return an iterator over the field for each timestep."""
@@ -83,34 +86,7 @@ class Loader:
         """Return the casedir."""
         return self._casedir
 
-    def update(
-            self,
-            field_dict: [str, dolfin.Function],
-            time: float,
-            timestep: int
-    ) -> None:
-        """Store solutions and perform computations for new timestep."""
-        for name in field_dict:
-            spec = self._fields[name].spec
-            if spec.stride_timestep % int(timestep) and sepc.start_timestep >= timestep:
-                if field.first_compute:     # Store metadata if not already done
-                    spec_dict = spec._asdict() 
-                    element = field_dict[name].function_space().ufl_element()
-                    spec_dict["element_family"] = str(element.family())
-                    spec_dict["element_cell"] = str(element.cell())
-                    spec_dict["element_degree"] = str(element.degree())
-                    name = f"{name}/{name}"
-                    self.store_metadata(name, spec_dict)
-                    field.first_compute = False
-
-                self.store_field(
-                    field_dict[name],
-                    timestep,
-                )
-
-        self._time_list.append(time)
-
-    def get_time(self) -> np.ndarray:
+    def load_time(self) -> np.ndarray:
         """Return the times."""
         filename = self.casedir/Path("times.npy")
         assert filename.isfile(), f"Cannot find {filename}"

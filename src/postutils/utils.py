@@ -36,4 +36,7 @@ def load_metadata(filepath) -> Dict[str, str]:
         return yaml.load(in_handle)
 
 
-# def store_xdmf(name, data)
+def import_fenicstools() -> Any:
+    """Delayed import of fenicstools."""
+    import fenicstools
+    return fenicstools

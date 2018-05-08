@@ -1,5 +1,3 @@
-"""A basecalss for controlling basic file I/O for dolfin functions."""
-
 import logging
 import dolfin 
 
@@ -9,7 +7,7 @@ from postspec import (
     FieldSpec,
 )
 
-from .utils import store_metadata
+from postutils import store_metadata
 
 from typing import (
     List,
@@ -17,57 +15,30 @@ from typing import (
     Any,
 )
 
+from .field_base import FieldBaseClass
 
-LOGGER = logging.getLogger(__name__)
 
-class FieldBaseClass:
-    """A wrapper around dolfin Functions used for the `PostProcessor`."""
+class Field(FieldBaseClass):
+    """
+    This class should allow specification of time plots over a point, averages, and other 
+    statistics.
 
-    def  __init__(self, name: str, spec: FieldSpec) -> None:
-        """Store name and spec.
+    ## Idea
+    Create a  plot over time class that allows for an (several) operation(s) on the
+    function before saving.
 
-        Args:
-            name: Name of the field.
-            spec: Specifications for the field.
-        """
-        self._name = name
-        self._spec = spec
-        self._path = None
-        self._first_compute = True
-        self._datafile_cache = {}
+    ## Idea:
+    Allow for snapshots of a function
 
-    @property
-    def name(self) -> str:
-        """Field name."""
-        return self._name
+    ## Idea:
+    Crrate an interface for making configurable nice plots
 
-    @property
-    def spec(self) -> FieldSpec:
-        """Field spec."""
-        return self._spec
-
-    @property
-    def first_compute(self) -> bool:
-        """Metadata is stored."""
-        return self._first_compute
-
-    @first_compute.setter
-    def first_compute(self, b) -> None:
-        self._first_compute = b
-
-    @property
-    def path(self) -> Path: 
-        """Return relative path."""
-        return self._path
-
-    @path.setter
-    def path(self, path: Path) -> None:
-        """Set relative path."""
-        self._path = path/Path(self._name)
+    ## Idea
+    See what cbcpost did.
+    """
 
     def update(self, timestep: int, time: float, data: dolfin.Function) -> None:
         """Update the data."""
-        # TODO: Save the time itself
         if timestep < self.spec.start_timestep:
             return
         if int(timestep) % int(self.spec.stride_timestep) != 0:
@@ -82,11 +53,11 @@ class FieldBaseClass:
             self.first_compute = False
         
         if "hdf5" in self.spec.save_as:
-            self.store_field_hdf5(timestep, time, data)
+            self._store_field_hdf5(timestep, time, data)
         if "xdmf" in self.spec.save_as:
-            self.store_field_xdmf(timestep, time, data)
+            self._store_field_xdmf(timestep, time, data)
 
-    def store_field_hdf5(
+    def _store_field_hdf5(
             self,
             timestep: int,
             time: float,
@@ -102,7 +73,7 @@ class FieldBaseClass:
         fieldfile.write(data, f"{self.name}{timestep}")
         self._datafile_cache[key] = fieldfile
 
-    def store_field_xdmf(
+    def _store_field_xdmf(
             self,
             timestep: int,
             time: float,
@@ -119,6 +90,8 @@ class FieldBaseClass:
         self._datafile_cache[key] = fieldfile
 
     def load_field(self, mesh, timesteps: List[int]):
+        # TODO: Does this work?
+        # TODO: This needs more thought
         element = dolfin.FiniteElement(
             self.spec.element_family,
             self.spec.element_cell,
@@ -134,6 +107,3 @@ class FieldBaseClass:
                     file_handle.read(v, f"/{name}{i}")
                     yield v
 
-    def finalise(self) -> None:
-        for _, datafile in self._datafile_cache.items():
-            datafile.close()
