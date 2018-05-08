@@ -1,5 +1,7 @@
 """Utilities for storing metadata."""
 
+from pathlib import Path 
+
 from typing import (
     Any,
     Dict,
@@ -9,7 +11,7 @@ import yaml
 
 
 def store_metadata(
-        filepath: str,
+        filepath: Path,
         meta_dict: Dict[Any, Any],
         default_flow_style: bool = False
 ) -> None:
@@ -26,7 +28,7 @@ def store_metadata(
         yaml.dump(meta_dict, out_handle, default_flow_style=default_flow_style)
 
 
-def load_metadata(filepath) -> Dict[str, str]:
+def load_metadata(filepath: Path) -> Dict[str, str]:
     """Read the metadata associated with a field name.
 
     Arguments:

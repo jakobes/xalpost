@@ -1,33 +1,31 @@
-"""Point eval field.
+u"""Point eval field.
 
 Point eval relies on fenicstools.Probe
 
 Thanks to Øyvind Evju and cbcpost (bitbucket.org/simula_cbc/cbcpost).
 """
 
-import numpy as np
-
-import logging
-import dolfin 
-
 from pathlib import Path
 
-from postspec import (
-    FieldSpec,
-)
+
+import logging
+import dolfin
+
+import numpy as np
+
+from typing import List
+
+from postspec import FieldSpec
 
 from postutils import (
     store_metadata,
     import_fenicstools,
 )
 
-from typing import (
-    List,
-    Dict,
-    Any,
-)
-
 from .field_base import FieldBaseClass
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class PointField(FieldBaseClass):
@@ -38,18 +36,20 @@ class PointField(FieldBaseClass):
 
         Arguments:
             name: Name of field. See `FieldBaseClass` for more info.
-            spec: Specifications related to field I/O. See `postspec.FieldSpec`. 
+            spec: Specifications related to field I/O. See `postspec.FieldSpec`.
             points: Array of points at which to evaluate the function. The points must be
                 of the same dimension as the function.
         """
         super().__init__(name, spec)
         self._points = points
-        self._ft = import_fenicstools()
+        self._ft = import_fenicstools()     # Delayed import of fenicstools
+        self._probes = None                 # Defined in `compute`
+        self._results: List[np.ndarray] = []                  # Append probe evaluations
 
     def before_first_compute(self, data: dolfin.Function) -> None:
         """Create probes."""
         function_space = data.function_space()
-        fs_dim = function_space.mesh().geometry().dim() 
+        fs_dim = function_space.mesh().geometry().dim()
         point_dim = self._points.shape[-1]
         msg = f"Point of dimension {point_dim} != function space dimension {fs_dim}"
         assert fs_dim == point_dim, msg
@@ -57,10 +57,12 @@ class PointField(FieldBaseClass):
         self._probes = self._ft.Probes(self._points.flatten(), function_space)
 
     def compute(self, data) -> np.ndarray:
-        """Return the value of all probes"""
+        """Return the value of all probes."""
         # FIXME: This probably does npt work in parallel
-        self._probes(data)      # Evaluate all probes
+        # Make sure that `before_first_compute` is called first
+        self._probes(data)      # Evaluate all probes.
         results = self._probes.array()
+        self._probes.clear()        # Clear or bad things happen!
         return results
 
         # if dolfin.MPI.rang(dolfin.mpi_comm_world()) != 0:
@@ -73,16 +75,20 @@ class PointField(FieldBaseClass):
         if int(timestep) % int(self.spec.stride_timestep) != 0:
             return
 
-        if self.first_compute:
-            # Setup everything
+        if self.first_compute:              # Setup everything
+            self.first_compute = False      # Do not do this again
             self.before_first_compute(data)
-
             self._path.mkdir(parents=False, exist_ok=True)
-            spec_dict = self.spec._asdict() 
+
+            # Update spec with element specifications
+            spec_dict = self.spec._asdict()
             element = str(data.function_space().ufl_element())
             spec_dict["element"] = element
             spec_dict["point"] = list(map(tuple, self._points))
             store_metadata(self.path/f"metadata_{self.name}.yaml", spec_dict)
-            self.first_compute = False
-    
-        np.save(self.path/Path(f"probes_{self.name}"), self.compute(data))
+
+        self._results.append(self.compute(data))
+
+    def finalise(self) -> None:
+        """Save the results."""
+        np.save(self.path/Path(f"probes_{self.name}"), np.asarray(self._results))
