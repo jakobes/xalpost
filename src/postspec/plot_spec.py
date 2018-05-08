@@ -5,12 +5,13 @@ from typing import (
 
 
 class PlotSpec(NamedTuple):
-    name: str
-    title: str
     outdir: str
+    name: str
+    save_format: str = "png"
+    title: str
+    xlabel: str = "Time (ms)"
     ylabel: str
-    figsize: Tuple[int] = (14, 14)
+    figsize: Tuple[int, int] = (14, 14)
     grid: bool = True
     line_width: int = 4
-    save_format: str = "png"
     label_loc: str = "best"

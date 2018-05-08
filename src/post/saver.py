@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import (
     Dict,
     Any,
+    List,
 )
 
 from .baseclass import PostProcessorBaseClass
@@ -33,7 +34,7 @@ class Saver(PostProcessorBaseClass):
     def __init__(self, spec: PostProcessorSpec) -> None:
         """Store saver specifications."""
         super().__init__(spec)
-        self._time_list = []            # Keep track of time points
+        self._time_list: List[float] = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
 
     def store_mesh(
@@ -72,7 +73,8 @@ class Saver(PostProcessorBaseClass):
 
     def finalise(self) -> None:
         """Store the times."""
-        filename = self.casedir/Path("times.npfunctiony")
-        np.save(filename, np.asarray(self._time_list)) 
+        filename = self.casedir/Path("times.npy")
+        print(np.asarray(self._time_list))
+        np.save(filename, np.asarray(self._time_list))
         for _, field in self._fields.items():
             field.finalise()
