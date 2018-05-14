@@ -12,6 +12,7 @@ from typing import (
     Dict,
     Tuple,
     Any,
+    Generator,
 )
 
 from postspec import PlotSpec
@@ -20,36 +21,25 @@ from postspec import PlotSpec
 LOGGER = logging.getLogger(name=__name__)
 
 
-def preprocess_wei(
-        values: np.ndarray,
+def preprocess_wei_variable(
+        structured_array: np.ndarray,
         params: Dict[str, float],
-        kwargs: Dict[str, Any],
-) -> Tuple[np.ndarray, PlotSpec]:
+        kwargs: Dict[str, Any]
+) -> Generator[Tuple[np.ndarray, PlotSpec]]:
     """
-    Preprocess the Wei cell model for plotting.
-    
-    Values are assumed to be in the order used in the paper.
+    Scale the inputs so they are appropriate to plot.
 
     Args:
-        values: Array of dimension [N, 12], where N is the number of time steps
-        params: A dict with the field 'vol' and 'beta0' used to solve the model.
-        kwargs: Keyword arguments passed to PlotSpec.
+        structured_array: An array with the names of the parameters as dtype.
+        params: The parameters `vol` and `beta0` from the solver.
+        kwargs: `PotSpec` keyword arguments.
+
+    Return an iterator of the scaled data and corresponding plot spec.
     """
-    assert values.shape[1] == 12, "Expecting Wei to have 12 variables."
-    vol = params["vol"]
-    beta0 = params["beta0"]
-    voli = values[:, 10]
-    volo = (1 + 1/beta0)*vol * voli
+    msg = "Need the volume to compute skalings for all the ions,"""
+    assert "voli" in structured_array.dtype, msg
 
-    # Rescale the ion concentration by volume to get "mol".
-    values[:, 4] /= volo
-    values[:, 5] /= voli
-    values[:, 6] /= volo
-    values[:, 7] /= voli
-    values[:, 8] /= volo
-    values[:, 9] /= voli
-    values[:, 10] /= volo
-
+    # TODO: Move this to some global place?
     # NB! This relies on built-in dicts being ordered
     variable_dict = {
         "V": (r"Transmembrane potential", "mV"),
@@ -69,7 +59,29 @@ def preprocess_wei(
         "O": (r"Extracellular Oxygen $[O_2]$", "mol")
     }
 
-    for i, name in enumerate(variable_dict):
+    vol = params["vol"]         # Initial colume
+    beta0 = params["beta0"]     # Initial volume ratio
+    voli = structured_array["voli"]
+    volo = (1 + 1/beta0)*vol * voli
+
+    for name, _ in structured_array.dtype:
+        data = structured_array[name]
+
+        if name == "NKo":
+            data /= volo
+        if name == "NKi":
+            data /= voli
+
+        if name == "NNao":
+            data /= volo
+        if name == "NNai":
+            data /= voli
+
+        if name == "NClo":
+            data /= volo
+        if name == "NClo":
+            data /= voli
+
         plot_spec_kwargs = {
             "name": name,
             "title": name,
