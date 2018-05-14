@@ -10,3 +10,5 @@ from .configs import (
 )
 
 from .cellmodel_preprocessing import preprocess_wei
+
+from .wei_utils import wei_uniform_ic
