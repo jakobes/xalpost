@@ -8,3 +8,5 @@ from .configs import (
     set_matplotlib_parameters,
     set_compilation_parameters,
 )
+
+from .cellmodel_preprocessing import preprocess_wei

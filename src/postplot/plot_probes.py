@@ -34,6 +34,6 @@ def plot_point_field(
         labels = [f"probe {i}" for i in range(probes.shape[1])]
     ax.legend(labels, loc=spec.label_loc)
 
-    outfile = Path(spec.outdir) / spec.name / spec.save_format
-    outfile.mkdir(exist_ok=True)
-    fig.savefig(outfile)
+    outdir = Path(spec.outdir)
+    outdir.mkdir(exist_ok=True)
+    fig.savefig(str(outdir / f"{spec.name}.{spec.save_format}"))

@@ -14,7 +14,8 @@ def set_matplotlib_parameters(kwargs: Dict[str, str] = None) -> None:
     font_spec = {
         "family": "ubuntu",
     }
-    font_spec.update(kwargs)
+    if kwargs is not None:
+        font_spec.update(kwargs)
     mpl.rc('font', **font_spec)
 
 
