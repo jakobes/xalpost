@@ -72,6 +72,8 @@ class Field(FieldBaseClass):
         else:
             filename = self.path/f"{self.name}.xdmf"
             fieldfile = dolfin.XDMFFile(dolfin.mpi_comm_world(), str(filename))
+            fieldfile.parameters["flush_output"] = True
+
         fieldfile.write(data, float(time))
         self._datafile_cache[key] = fieldfile
 
