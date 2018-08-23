@@ -33,7 +33,7 @@ LOGGER = logging.getLogger(__name__)
 class Saver(PostProcessorBaseClass):
     """Class for saving stuff."""
 
-    def __init__(self, spec: PostProcessorSpec) -> None:
+    def __init__(self, spec: LoaderSpec) -> None:
         """Store saver specifications."""
         super().__init__(spec)
         self._time_list: List[float] = []            # Keep track of time points
@@ -73,10 +73,10 @@ class Saver(PostProcessorBaseClass):
         for name, data in data_dict.items():
             self._fields[name].update(timestep, time, data)
 
-    def finalise(self) -> None:
+    def close(self) -> None:
         """Store the times."""
         filename = self.casedir/Path("times.npy")
         print(np.asarray(self._time_list))
         np.save(filename, np.asarray(self._time_list))
         for _, field in self._fields.items():
-            field.finalise()
+            field.close()

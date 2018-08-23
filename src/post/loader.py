@@ -6,6 +6,7 @@ import logging
 import numpy as np
 
 from postspec import (
+    LoaderSpec,
     PostProcessorSpec,
     FieldSpec,
 )
@@ -23,52 +24,61 @@ from typing import (
     Any,
 )
 
+from .baseclass import PostProcessorBaseClass
+
 
 LOGGER = logging.getLogger(__name__)
 
 
-class Loader:
+class Loader(PostProcessorBaseClass):
     """Class for loading meshes and functions."""
+
+    def __init__(self, spec: LoaderSpec) -> None:
+        """Store saver specifications."""
+        super().__init__(spec)
+        # self._time_list: List[float] = []            # Keep track of time points
+        # self._first_compute = True      # Perform special action after before first save
+
 
     def load_mesh(self) -> dolfin.mesh:
         """Load and return the mesh.
 
         Will also return cell and facet functions if present.
         """
-        filename = calsedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as meshfile:
+        filename = self.casedir/Path("mesh.hdf5")
+        with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as meshfile:
             mesh = dolfin.Mesh()
             meshfile.read(mesh, "/Mesh", False)
         return mesh
 
-    def load_mesh_function(self, name: str) -> dolfin.MeshFunction:
+    def load_mesh_function(self, mesh: dolfin.Mesh, name: str) -> dolfin.MeshFunction:
         """Lead and return a mesh function.
 
         There are two options, 'CellDomains' or 'FacetDomains'. Both are stored in
         'mesh.hdf5'.
 
         Arguments:
+            mesh: The mesh the function is defin on. Use `self.load_mesh`.
             name: Either 'CellDomains' or 'FacetDomains'.
         """
         msg = "Meshfunctions are stored as 'CellDomains' or 'FacetDomains'."
         assert name in ("CellDomains", "FacetDomains"), msg
 
-        filename = calsedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as meshfile:
-            mesh_function = dolfin.MeshFunction()
-            meshfile.read(mesh, f"/{name}")
+        filename = self.casedir/Path("mesh.hdf5")
+        with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as meshfile:
+            mesh_function = dolfin.MeshFunction("size_t", mesh)
+            meshfile.read(mesh_function, f"/{name}")
         return mesh_function
 
     def load_metadata(self, name) -> Dict[str, str]:
         """Read the metadata associated with a field name."""
-        return load_metadata(self.casedir/Path(f"{name}/{name}.yaml"))
+        return load_metadata(self.casedir/Path(f"{name}/metadata_{name}.yaml"))
 
     def load_field(self, name: str) -> None:
         """Return an iterator over the field for each timestep."""
-        field = self._fields[name]
         metadata = self.load_metadata(name)
 
-        time_array = self.get_time()
+        time_array = self.load_time()
         mesh = self.load_mesh()
 
         # element = eval(spec["element"])     # Let us hopw this does not go wring
@@ -78,12 +88,12 @@ class Loader:
             metadata["element_degree"]
         )
         V_space = dolfin.FunctionSpace(mesh, element)
-        v_func = Function(V_space)
+        v_func = dolfin.Function(V_space)
 
         filename = self.casedir/Path(f"{name}/{name}.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as fieldfile:
+        with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as fieldfile:
             for i, t in enumerate(time_array):
-                fieldfile.read(v_func, "/{name}{i}")
+                fieldfile.read(v_func, f"/{name}{i}")
                 yield t, v_func
 
     @property
@@ -94,5 +104,5 @@ class Loader:
     def load_time(self) -> np.ndarray:
         """Return the times."""
         filename = self.casedir/Path("times.npy")
-        assert filename.isfile(), f"Cannot find {filename}"
+        assert filename.exists(), f"Cannot find {filename}"
         return np.load(filename)

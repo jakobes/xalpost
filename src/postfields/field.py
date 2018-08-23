@@ -108,7 +108,7 @@ class Field(FieldBaseClass):
                     file_handle.read(v, f"/{self.name}{i}")
                     yield v
 
-    def finalise(self) -> None:
+    def close(self) -> None:
         """Finalise all computations and close file readers/writers."""
         for _, datafile in self._datafile_cache.items():
             datafile.close()
