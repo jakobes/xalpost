@@ -1,10 +1,11 @@
 # System imports
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name = "postprocessing",
+    name = "xalpost",
     author = "Jakob E. Schreiner",
     author_email = "jakob@xal.no",
-    packages = ["post", "postspec", "postfields", "postutils"],
-    package_dir = {"": "src"} 
+    packages = find_packages("src"),
+    # packages = ["post", "postspec", "postfields", "postutils"],
+    package_dir = {"": "src"}
 )

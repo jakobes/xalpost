@@ -34,8 +34,11 @@ class Field(FieldBaseClass):
 
             # Update spec with element specifications
             spec_dict = self.spec._asdict()
-            element = str(data.function_space().ufl_element())
-            spec_dict["element"] = element
+            element = data.function_space().ufl_element()
+            spec_dict["element_family"] = str(element.family())  # e.g. Lagrange
+            # spec_dict["element_cell"] = element.cell()           # e.g. triangle
+            spec_dict["element_degree"] = element.degree()
+
             store_metadata(self.path/f"metadata_{self.name}.yaml", spec_dict)
 
         if "hdf5" in self.spec.save_as:
@@ -63,7 +66,10 @@ class Field(FieldBaseClass):
             self,
             timestep: int,
             time: float,
-            data: dolfin.Function
+            data: dolfin.Function,
+            flush_output: bool = True,
+            rewrite_mesh: bool = False,
+            share_mesh: bool = True
     ) -> None:
         """Save the function as xdmf per timemstep."""
         key = "xdmf"        # Key to access datafile cache
@@ -72,7 +78,9 @@ class Field(FieldBaseClass):
         else:
             filename = self.path/f"{self.name}.xdmf"
             fieldfile = dolfin.XDMFFile(dolfin.mpi_comm_world(), str(filename))
-            fieldfile.parameters["flush_output"] = True
+            fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
+            fieldfile.parameters["functions_share_mesh"] = share_mesh
+            fieldfile.parameters["flush_output"] = flush_output
 
         fieldfile.write(data, float(time))
         self._datafile_cache[key] = fieldfile
@@ -85,7 +93,7 @@ class Field(FieldBaseClass):
         # Reconstruct Finite Element. TODO: Does not support VectorElement?
         element = dolfin.FiniteElement(
             self.spec.element_family,
-            self.spec.element_cell,
+            dolfin.triangle,
             self.sepc.element_degree
         )
         V = dolfin.FunctionSpace(mesh, element)

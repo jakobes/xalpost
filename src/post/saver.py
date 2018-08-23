@@ -7,6 +7,8 @@ import numpy as np
 
 from postspec import (
     PostProcessorSpec,
+    SaverSpec,
+    LoaderSpec,
     FieldSpec,
 )
 

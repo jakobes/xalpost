@@ -28,7 +28,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Loader:
-    """Read stuff."""
+    """Class for loading meshes and functions."""
 
     def load_mesh(self) -> dolfin.mesh:
         """Load and return the mesh.
@@ -71,15 +71,20 @@ class Loader:
         time_array = self.get_time()
         mesh = self.load_mesh()
 
-        element = eval(spec["element"])     # Let us hopw this does not go wring
-        V = dolfin.FunctionSpace(mesh, element)
-        v = Function(V)
+        # element = eval(spec["element"])     # Let us hopw this does not go wring
+        element = dolfin.FiniteElement(
+            metadata["element_family"],
+            dolfin.triangle,
+            metadata["element_degree"]
+        )
+        V_space = dolfin.FunctionSpace(mesh, element)
+        v_func = Function(V_space)
 
         filename = self.casedir/Path(f"{name}/{name}.hdf5")
         with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as fieldfile:
             for i, t in enumerate(time_array):
-                fieldfile.read(v, "/{name}{i}")
-                yield t, v
+                fieldfile.read(v_func, "/{name}{i}")
+                yield t, v_func
 
     @property
     def casedir(self) -> Path:
