@@ -5,7 +5,7 @@ import dolfin as do
 from typing import Generator
 
 
-class TestSolver:
+class PoissonSolver:
     """A solver for the poisson equation for io testing purposes."""
 
     def __init__(self, N: int) -> None:

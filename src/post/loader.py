@@ -93,7 +93,7 @@ class Loader(PostProcessorBaseClass):
         filename = self.casedir/Path(f"{name}/{name}.hdf5")
         with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as fieldfile:
             for i, t in enumerate(time_array):
-                fieldfile.read(v_func, f"/{name}{i}")
+                fieldfile.read(v_func, f"{name}{i}")
                 yield t, v_func
 
     @property

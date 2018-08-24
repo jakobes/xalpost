@@ -85,29 +85,6 @@ class Field(FieldBaseClass):
         fieldfile.write(data, float(time))
         self._datafile_cache[key] = fieldfile
 
-    def load_field(self, mesh, timesteps: List[int]) -> Iterable[dolfin.Function]:
-        """Load a field specified by spec."""
-        # TODO: Does this work?
-        # TODO: This needs more thought
-
-        # Reconstruct Finite Element. TODO: Does not support VectorElement?
-        element = dolfin.FiniteElement(
-            self.spec.element_family,
-            dolfin.triangle,
-            self.sepc.element_degree
-        )
-        V = dolfin.FunctionSpace(mesh, element)
-        v = dolfin.Function(V)
-
-        filename = self.path/f"{self.name}.hdf5"
-        with dolfin.HDF5File(mesh.mpi_comm(), filename, "r") as file_handle:
-            for ts in timesteps:
-                start_test = ts >= self.spec.start_timestep
-                stride_test = ts % self.spec.stride_timestep == 0
-                if start_test and stride_test:
-                    file_handle.read(v, f"/{self.name}{i}")
-                    yield v
-
     def close(self) -> None:
         """Finalise all computations and close file readers/writers."""
         for _, datafile in self._datafile_cache.items():

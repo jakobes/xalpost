@@ -76,7 +76,6 @@ class Saver(PostProcessorBaseClass):
     def close(self) -> None:
         """Store the times."""
         filename = self.casedir/Path("times.npy")
-        print(np.asarray(self._time_list))
         np.save(filename, np.asarray(self._time_list))
         for _, field in self._fields.items():
             field.close()
