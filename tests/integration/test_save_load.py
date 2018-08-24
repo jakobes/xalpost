@@ -35,7 +35,7 @@ def test_save_load():
         casedirname = Path(tmpdirname)/"test_pp_casedir"
 
         # Setup saver
-        field_spec = FieldSpec(stride_timestep=1)
+        field_spec = FieldSpec(stride_timestep=10)
         saver_spec = SaverSpec(casedir=str(casedirname))
         saver = Saver(saver_spec)
         saver.store_mesh(
@@ -46,10 +46,10 @@ def test_save_load():
         saver.add_field(Field("u", field_spec))
 
         # Solver loop
-        time_function_list = []      # save (t, func) for compare with load
+        time_func_dict = {}
         for i, (t, u) in enumerate(solver.solve(0, 100, 1.0)):
             saver.update(t, i, {"u": u})
-            time_function_list.append((t, u.copy(True)))        # Need deepcopy
+            time_func_dict[t] = u.copy(True)
         saver.close()
 
         # Define loader
@@ -66,9 +66,8 @@ def test_save_load():
         assert np.sum(solver.facet_function.array() - loaded_facet_function.array()) == 0
 
         # Compare functions and time
-        for (loaded_t, loaded_u), (t, u) in zip(loader.load_field("u"), time_function_list):
-            assert t - loaded_t == 0
-            diff = np.sum(u.vector().array() - loaded_u.vector().array())
+        for loaded_t, loaded_u in loader.load_field("u"):
+            diff = np.sum(time_func_dict[loaded_t].vector().array() - loaded_u.vector().array())
             assert  diff == 0
 
 
