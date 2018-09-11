@@ -39,7 +39,7 @@ class Field(FieldBaseClass):
             # spec_dict["element_cell"] = element.cell()           # e.g. triangle
             spec_dict["element_degree"] = element.degree()
 
-            store_metadata(self.path/f"metadata_{self.name}.yaml", spec_dict)
+            store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
 
         if "hdf5" in self.spec.save_as:
             self._store_field_hdf5(timestep, time, data)
@@ -57,9 +57,9 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path/f"{self.name}.hdf5"
+            filename = self.path/"{name}.hdf5".format(name=self.name)
             fieldfile = dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "w")
-        fieldfile.write(data, f"{self.name}{timestep}")
+        fieldfile.write(data, "{name}{timestep}".format(name=self.name))
         self._datafile_cache[key] = fieldfile
 
     def _store_field_xdmf(
@@ -76,7 +76,7 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path/f"{self.name}.xdmf"
+            filename = self.path/"{name}.xdmf".format(name=self.name)
             fieldfile = dolfin.XDMFFile(dolfin.mpi_comm_world(), str(filename))
             fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             fieldfile.parameters["functions_share_mesh"] = share_mesh

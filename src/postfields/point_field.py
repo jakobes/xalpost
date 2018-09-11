@@ -51,7 +51,10 @@ class PointField(FieldBaseClass):
         function_space = data.function_space()
         fs_dim = function_space.mesh().geometry().dim()
         point_dim = self._points.shape[-1]
-        msg = f"Point of dimension {point_dim} != function space dimension {fs_dim}"
+        msg = "Point of dimension {point_dim} != function space dimension {fs_dim}".format(
+            point_dim=point_dim,
+            fs_dim=fs_dim,
+        )
         assert fs_dim == point_dim, msg
 
         self._probes = self._ft.Probes(self._points.flatten(), function_space)
@@ -82,13 +85,20 @@ class PointField(FieldBaseClass):
 
             # Update spec with element specifications
             spec_dict = self.spec._asdict()
-            element = str(data.function_space().ufl_element())
-            spec_dict["element"] = element
-            spec_dict["point"] = list(map(tuple, self._points))
-            store_metadata(self.path/f"metadata_{self.name}.yaml", spec_dict)
+            element = data.function_space().ufl_element()
+
+            spec_dict["element_family"] = str(element.family())  # e.g. Lagrange
+            spec_dict["element_degree"] = element.degree()
+
+            plist = [tuple(map(float, p)) for p in self._points]      # TODO: Untested
+            # # spec_dict["point"] = [tuple(map(float, tuple(p))) for p in self._points]
+            spec_dict["point"] = plist
+
+            # spec_dict["point"] = list(map(tuple, self._points))
+            store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
 
         self._results.append(self.compute(data))
 
-    def finalise(self) -> None:
+    def close(self) -> None:
         """Save the results."""
-        np.save(self.path/Path(f"probes_{self.name}"), np.asarray(self._results))
+        np.save(self.path/Path("probes_{name}".format(name=self.name)), np.asarray(self._results))

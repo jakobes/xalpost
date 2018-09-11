@@ -57,7 +57,7 @@ class Saver(PostProcessorBaseClass):
     def add_field(self, field: Field) -> None:
         """Add a field to the postprocessor."""
         # FIXME: Figure out the logging system
-        msg = f"A field with name {field.name} already exists."
+        msg = "A field with name {name} already exists.".format(name=field.name)
         assert field.name not in self._fields, msg      # TODO: Issue warning, not abort
         field.path = self._casedir
         self._fields[field.name] = field

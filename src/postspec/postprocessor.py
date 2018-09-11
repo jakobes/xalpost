@@ -26,5 +26,4 @@ class FieldSpec(NamedTuple):
     start_timestep: int = -1    # Save after `start_timestep` timestep
     stride_timestep: int = 1    # Save every `stride_timestep`
     element_family: str = None
-    # element_cell: str = None
     element_degree: int = None
