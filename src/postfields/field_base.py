@@ -27,9 +27,12 @@ class FieldBaseClass:
         """
         self._name = name
         self._spec = spec
-        self._path: Path = None
-        self._first_compute: bool = True
-        self._datafile_cache: Dict[str, Any] = {}
+        #self._path: Path = None
+        self._path = None
+        #self._first_compute: bool = True
+        #self._datafile_cache: Dict[str, Any] = {}
+        self._first_compute = True
+        self._datafile_cache = {}
 
     @property
     def name(self) -> str:

@@ -23,7 +23,8 @@ class PostProcessorBaseClass:
         """Store parameters."""
         self._spec = spec
         self._casedir = Path(spec.casedir)
-        self._fields: Dict[str, FieldBaseClass] = {}
+        #self._fields: Dict[str, FieldBaseClass] = {}
+        self._fields = {}
 
     @property
     def casedir(self) -> Path:

@@ -43,8 +43,9 @@ class PointField(FieldBaseClass):
         super().__init__(name, spec)
         self._points = points
         self._ft = import_fenicstools()     # Delayed import of fenicstools
+        #self._results: List[np.ndarray] = []                  # Append probe evaluations
+        self._results = []                  # Append probe evaluations
         self._probes = None                 # Defined in `compute`
-        self._results: List[np.ndarray] = []                  # Append probe evaluations
 
     def before_first_compute(self, data: dolfin.Function) -> None:
         """Create probes."""
