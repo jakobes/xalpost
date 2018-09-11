@@ -36,7 +36,8 @@ class Saver(PostProcessorBaseClass):
     def __init__(self, spec: LoaderSpec) -> None:
         """Store saver specifications."""
         super().__init__(spec)
-        self._time_list: List[float] = []            # Keep track of time points
+        self._time_list = []            # Keep track of time points
+        #self._time_list: List[float] = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
 
     def store_mesh(

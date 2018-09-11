@@ -4,6 +4,7 @@ from typing import (
 )
 
 
+
 class SaverSpec(NamedTuple):
     """Specifications for `post.Saver`."""
     casedir: str
