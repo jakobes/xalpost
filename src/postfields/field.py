@@ -36,7 +36,6 @@ class Field(FieldBaseClass):
             spec_dict = self.spec._asdict()
             element = data.function_space().ufl_element()
             spec_dict["element_family"] = str(element.family())  # e.g. Lagrange
-            # spec_dict["element_cell"] = element.cell()           # e.g. triangle
             spec_dict["element_degree"] = element.degree()
 
             store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
@@ -59,7 +58,7 @@ class Field(FieldBaseClass):
         else:
             filename = self.path/"{name}.hdf5".format(name=self.name)
             fieldfile = dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "w")
-        fieldfile.write(data, "{name}{timestep}".format(name=self.name))
+        fieldfile.write(data, "{name}{timestep}".format(name=self.name, timestep=timestep))
         self._datafile_cache[key] = fieldfile
 
     def _store_field_xdmf(
