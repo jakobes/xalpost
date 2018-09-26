@@ -41,7 +41,9 @@ class PointField(FieldBaseClass):
                 of the same dimension as the function.
         """
         super().__init__(name, spec)
-        self._points = points
+        self._points = np.asarray(points)
+        if len(self._points.shape) != 2:    # If we have a single point
+            self._points.shape = (1, self._points.shape[0])
         self._ft = import_fenicstools()     # Delayed import of fenicstools
         self._probes = None                 # Defined in `compute`
         self._results: List[np.ndarray] = []                  # Append probe evaluations
@@ -89,6 +91,9 @@ class PointField(FieldBaseClass):
 
             spec_dict["element_family"] = str(element.family())  # e.g. Lagrange
             spec_dict["element_degree"] = element.degree()
+
+            # import IPython
+            # IPython.embed()
 
             plist = [tuple(map(float, p)) for p in self._points]      # TODO: Untested
             # # spec_dict["point"] = [tuple(map(float, tuple(p))) for p in self._points]

@@ -24,10 +24,13 @@ class FieldBaseClass:
         Args:
             name: Name of the field.
             spec: Specifications for the field.
+
+        Parameters:
+            _path: The output directory
         """
         self._name = name
         self._spec = spec
-        self._path: Path = None
+        self._path: Path = ""       # Is this a sensible default?
         self._first_compute: bool = True
         self._datafile_cache: Dict[str, Any] = {}
 
