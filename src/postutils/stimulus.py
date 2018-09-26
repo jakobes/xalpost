@@ -1,7 +1,7 @@
-from math import sin, pi
+from math import sin, cos, pi, asin, acos
 
 
-def square_puls(
+def square_pulse(
         time: float,
         pulse_width: float,
         frequency: float,
@@ -18,8 +18,12 @@ def square_puls(
         frequency: The number of pulses per ms second.
     """
     sin_curve = sin(2*pi*frequency*time)
-    retval = int(sin_curve >= sin(pulse_width/2))
-    other_pulse = int(sin_curve <= -sin(pulse_width/2))
+    threshold = sin(2*pi*frequency*(1/(4*frequency) - pulse_width/2))
+    retval = int(sin_curve >= threshold)
+    other_pulse = int(sin_curve <= -threshold)
+
+    # retval = int(sin_curve >= sin(1/(4*frequency) - pulse_width/2))
+    # other_pulse = int(sin_curve <= -sin(1/(4*frequency) - pulse_width/2))
     if bidirectional:
         retval -= other_pulse
     else:
