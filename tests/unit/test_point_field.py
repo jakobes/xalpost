@@ -8,9 +8,14 @@ from postfields import PointField
 from postspec import FieldSpec
 from pathlib import Path
 
+from post import read_point_values
 
-def test_point_field(function):
-    points = np.array([0.5, 0.5])
+
+@pytest.mark.parametrize("points", [
+    np.array([[0.5, 0.5], [0.25, 0.75]]),
+    np.array([0.5, 0.5])
+])
+def test_point_field_2(function, points):
     name = "_test"
     pf = PointField(name, FieldSpec(), points)
 
@@ -22,8 +27,8 @@ def test_point_field(function):
         pf.update(1, 1, function)
         pf.close()
 
-        data = np.load(Path(tmpdirname) / name / "probes_{}.npy".format(name))
-    assert np.allclose(data, [1, 2])
+        data = read_point_values(tmpdirname, "_test")
+    assert np.allclose(data, [[1]*len(points), [2]*len(points)])
 
 
 @pytest.fixture
@@ -34,4 +39,7 @@ def function():
     return function
 
 if __name__ == "__main__":
-    test_point_field(function())
+    points = np.array([[0.5, 0.5], [0.25, 0.75]])
+    points = np.array([0.5, 0.5])
+    test_point_field_2(function(), points)
+

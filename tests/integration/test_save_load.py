@@ -50,7 +50,7 @@ def test_save_load():
         for i, (t, u) in enumerate(solver.solve(0, 100, 1.0)):
             saver.update(t, i, {"u": u})
             time_func_dict[t] = u.copy(True)
-        saver.close()
+        # saver.close()
 
         # Define loader
         loader_spec = LoaderSpec(casedir=str(casedirname))

@@ -58,20 +58,17 @@ class PointField(FieldBaseClass):
             fs_dim=fs_dim,
         )
         assert fs_dim == point_dim, msg
-
         self._probes = self._ft.Probes(self._points.flatten(), function_space)
 
     def compute(self, data) -> np.ndarray:
         """Return the value of all probes."""
         # FIXME: This probably does npt work in parallel
+
         # Make sure that `before_first_compute` is called first
         self._probes(data)      # Evaluate all probes.
         results = self._probes.array()
         self._probes.clear()        # Clear or bad things happen!
         return results
-
-        # if dolfin.MPI.rang(dolfin.mpi_comm_world()) != 0:
-        #     results = np.array([], dtype=np.float64)
 
     def update(self, timestep: int, time: float, data: dolfin.Function) -> None:
         """Update the data."""
@@ -92,9 +89,6 @@ class PointField(FieldBaseClass):
             spec_dict["element_family"] = str(element.family())  # e.g. Lagrange
             spec_dict["element_degree"] = element.degree()
 
-            # import IPython
-            # IPython.embed()
-
             plist = [tuple(map(float, p)) for p in self._points]      # TODO: Untested
             # # spec_dict["point"] = [tuple(map(float, tuple(p))) for p in self._points]
             spec_dict["point"] = plist
@@ -102,8 +96,13 @@ class PointField(FieldBaseClass):
             # spec_dict["point"] = list(map(tuple, self._points))
             store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
 
-        self._results.append(self.compute(data))
+        with open(self.path/Path("probes_{name}.txt".format(name=self.name)), "a") as of_handle:
+            # TODO: Who knows whether this works
+            _data = self.compute(data)
+            if self._points.shape[0] == 1:
+                _data = (_data,)
+            _data_format_str = ", ".join(("{}",)*len(_data))
+            of_handle.write(_data_format_str.format(*_data))
+            of_handle.write("\n")
 
-    def close(self) -> None:
-        """Save the results."""
-        np.save(self.path/Path("probes_{name}".format(name=self.name)), np.asarray(self._results))
+        self._results.append(self.compute(data))

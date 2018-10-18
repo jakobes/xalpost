@@ -6,8 +6,7 @@ import logging
 import numpy as np
 
 from postspec import (
-    PostProcessorSpec,
-    SaverSpec,
+    PostProcessorSpec, SaverSpec,
     LoaderSpec,
     FieldSpec,
 )
@@ -37,8 +36,8 @@ class Saver(PostProcessorBaseClass):
         """Store saver specifications."""
         super().__init__(spec)
         self._time_list = []            # Keep track of time points
-        #self._time_list: List[float] = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
+        self._casedir.mkdir(parents=True)
 
     def store_mesh(
             self,
@@ -74,9 +73,11 @@ class Saver(PostProcessorBaseClass):
         for name, data in data_dict.items():
             self._fields[name].update(timestep, time, data)
 
+        filename = self.casedir/Path("times.txt")
+        with open(filename, "a") as of_handle:
+            of_handle.write("{}\n".format(float(time)))
+
     def close(self) -> None:
         """Store the times."""
-        filename = self.casedir/Path("times.npy")
-        np.save(filename, np.asarray(self._time_list))
         for _, field in self._fields.items():
             field.close()

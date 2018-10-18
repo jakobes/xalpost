@@ -25,6 +25,7 @@ from typing import (
 )
 
 from .baseclass import PostProcessorBaseClass
+from .load_plain_text import load_times
 
 
 LOGGER = logging.getLogger(__name__)
@@ -38,7 +39,6 @@ class Loader(PostProcessorBaseClass):
         super().__init__(spec)
         # self._time_list: List[float] = []            # Keep track of time points
         # self._first_compute = True      # Perform special action after before first save
-
 
     def load_mesh(self) -> dolfin.mesh:
         """Load and return the mesh.
@@ -108,6 +108,7 @@ class Loader(PostProcessorBaseClass):
 
     def load_time(self) -> np.ndarray:
         """Return the times."""
-        filename = self.casedir/Path("times.npy")
+        filename = self.casedir / Path("times.txt")
         assert filename.exists(), "Cannot find {filename}".format(filename)
-        return np.load(filename)
+        return load_times(filename)
+        # return np.load(filename)

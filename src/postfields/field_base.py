@@ -62,3 +62,7 @@ class FieldBaseClass:
     def path(self, path: Path) -> None:
         """Set relative path."""
         self._path = path/Path(self._name)
+
+    def close(self) -> None:
+        """This function is called when closing `Saver`."""
+        pass

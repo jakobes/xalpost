@@ -7,12 +7,15 @@ from postspec import FieldSpec
 
 from postutils import store_metadata
 
+from pathlib import Path
+
 from typing import (
     List,
     Iterable,
 )
 
 from .field_base import FieldBaseClass
+
 
 
 LOGGER = logging.getLogger(__name__)
@@ -52,14 +55,14 @@ class Field(FieldBaseClass):
             data: dolfin.Function
     ) -> None:
         """Save as hdf5."""
-        key = "hdf5"
-        if key in self._datafile_cache:
-            fieldfile = self._datafile_cache[key]
+        _key = "hdf5"
+        if _key in self._datafile_cache:
+            fieldfile = self._datafile_cache[_key]
         else:
             filename = self.path/"{name}.hdf5".format(name=self.name)
             fieldfile = dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "w")
         fieldfile.write(data, "{name}{timestep}".format(name=self.name, timestep=timestep))
-        self._datafile_cache[key] = fieldfile
+        self._datafile_cache[_key] = fieldfile
 
     def _store_field_xdmf(
             self,

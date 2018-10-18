@@ -11,7 +11,7 @@ class PlotSpec(NamedTuple):
     name: str
     title: str
     ylabel: str
-    label_fs: int = 24
+    label_fs: int = 24      # fontsizes
     title_fs: int = 48
     xlabel: str = "Time (ms)"
     save_format: str = "png"

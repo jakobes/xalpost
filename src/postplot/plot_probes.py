@@ -1,6 +1,5 @@
 """Plot PointField over time."""
 
-
 from pathlib import Path
 from typing import Container
 
@@ -25,9 +24,9 @@ def plot_point_field(
     for i in range(probes.shape[1]):
         ax.plot(times, probes[:, i], linewidth=spec.linewidth)
 
-    ax.set_title(spec.title)
-    ax.set_xlabel(spec.xlabel)
-    ax.set_ylabel(spec.ylabel)
+    ax.set_title(spec.title, fontsize=spec.title_fs)
+    ax.set_xlabel(spec.xlabel, fontsize=spec.label_fs)
+    ax.set_ylabel(spec.ylabel, fontsize=spec.label_fs)
     ax.grid(spec.grid)
 
     if labels is None:

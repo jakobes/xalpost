@@ -1,17 +1,8 @@
-#from .data_specs import (
-#    Data_spec,
-#    Plot_spec,
-#)
+"""Module for parameter sets"""
 
-#from .pdesolver_spec import (
-#    PDESolverSpec,
-#    SolutionFieldSpec,
-#    PDESimulationSpec,
-#)
-
-#from .plot_spec import (
-#    PlotSpec,
-#)
+from .plot_spec import (
+    PlotSpec,
+)
 
 from .postprocessor import (
     PostProcessorSpec,
