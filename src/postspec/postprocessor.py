@@ -7,6 +7,7 @@ from typing import (
 class SaverSpec(NamedTuple):
     """Specifications for `post.Saver`."""
     casedir: str
+    overwrite_casedir: bool = False
 
 
 class LoaderSpec(NamedTuple):

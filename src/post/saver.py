@@ -37,7 +37,7 @@ class Saver(PostProcessorBaseClass):
         super().__init__(spec)
         self._time_list = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
-        self._casedir.mkdir(parents=True)
+        self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)
 
     def store_mesh(
             self,
