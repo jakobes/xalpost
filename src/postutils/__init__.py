@@ -12,3 +12,5 @@ from .configs import (
 from .wei_utils import wei_uniform_ic
 
 from .stimulus import square_pulse
+
+from .assigner import assign_restart_ic

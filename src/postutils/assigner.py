@@ -1,17 +1,20 @@
 """A collection of tools to assign inhomogeneous initial conditions."""
 
 import numpy as np
-import xalbrain as xb
+import dolfin as df
 
 from typing import (
     Callable,
     Tuple,
+    Iterable,
 )
 
 
 class NonuniformIC:
     def __init__(self, coordinates: np.ndarray, data: np.ndarray) -> None:
         """
+        TODO: Is this for temporal interpolation?
+
         Arguments:
             coordinates: Original sampling coordinates for `data`.
             data: Samples values at `coordinates`.
@@ -27,7 +30,7 @@ class NonuniformIC:
 
 
 def new_assign_ic(
-        receiving_function: xb.Function,
+        receiving_function: df.Function,
         ic_generator: NonuniformIC,
         degree: int = 1
 ) -> None:
@@ -42,26 +45,26 @@ def new_assign_ic(
     """
     mixed_func_space = receiving_function.function_space()
     mesh = mixed_func_space.mesh()
-    V = xb.FunctionSpace(mesh, "CG", 1)    # TODO: infer this somehow
+    V = df.FunctionSpace(mesh, "CG", 1)    # TODO: infer this somehow
 
     # Copy functions to be able to assign to them
     functions = receiving_function.split(deepcopy=True)
 
     for i, (f, ic_func) in enumerate(zip(functions, ic_generator())):
-        class IC(xb.Expression):
+        class IC(df.Expression):
             def eval(self, value, x):
                 value[0] = ic_func(x[0])    # TODO: 1D for now
 
         ic = IC(degree=degree)
-        assigner = xb.FunctionAssigner(mixed_func_space.sub(i), V)
-        assigner.assign(receiving_function.sub(i), xb.project(ic, V))
+        assigner = df.FunctionAssigner(mixed_func_space.sub(i), V)
+        assigner.assign(receiving_function.sub(i), df.project(ic, V))
 
 
 def assign_ic(func, data):
     mixed_func_space = func.function_space()
 
     functions = func.split(deepcopy=True)
-    V = xb.FunctionSpace(mixed_func_space.mesh(), "CG", 1)
+    V = df.FunctionSpace(mixed_func_space.mesh(), "CG", 1)
     ic_indices = np.random.randint(
         0,
         data.shape[0],
@@ -70,8 +73,29 @@ def assign_ic(func, data):
     _data = data[ic_indices]
 
     for i, f in enumerate(functions):
-        ic_func = xb.Function(V)
+        ic_func = df.Function(V)
         ic_func.vector()[:] = np.array(_data[:, i])
 
-        assigner = xb.FunctionAssigner(mixed_func_space.sub(i), V)
+        assigner = df.FunctionAssigner(mixed_func_space.sub(i), V)
         assigner.assign(func.sub(i), ic_func)
+
+
+def assign_restart_ic(
+        receiving_function: df.Function,
+        assigning_func_iterator: Iterable[df.Function]
+) -> None:
+    """Assign a seriess of functions to the `receiving_function`.
+
+    This function is indended for use when restarting simulations, using previously computed
+    solutions as initial conditions.
+    """
+    # Get receiving function space
+    mixed_function_space = receiving_function.function_space( )
+    assigning_function_space = df.FunctionSpace(mixed_function_space.mesh(), "CG", 1)
+
+    for subfunc_idx, assigning_sub_function in enumerate(assigning_func_iterator):
+        assigner = df.FunctionAssigner(
+            mixed_function_space.sub(subfunc_idx),
+            assigning_function_space
+        )
+        assigner.assign(receiving_function.sub(subfunc_idx), assigning_sub_function)
