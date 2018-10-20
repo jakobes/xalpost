@@ -50,7 +50,7 @@ def test_save_load():
         for i, (t, u) in enumerate(solver.solve(0, 100, 1.0)):
             saver.update(t, i, {"u": u})
             time_func_dict[t] = u.copy(True)
-        # saver.close()
+        saver.close()
 
         # Define loader
         loader_spec = LoaderSpec(casedir=str(casedirname))
@@ -66,9 +66,9 @@ def test_save_load():
         assert np.sum(solver.facet_function.array() - loaded_facet_function.array()) == 0
 
         # Compare functions and time
-        for loaded_t, loaded_u in loader.load_field("u"):
+        for loaded_u, loaded_t in loader.load_field("u", return_time=True):
             diff = np.sum(time_func_dict[loaded_t].vector().array() - loaded_u.vector().array())
-            assert  diff == 0
+            assert diff == 0, diff
 
 
 if __name__ == "__main__":

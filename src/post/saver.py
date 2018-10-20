@@ -21,6 +21,7 @@ from typing import (
     Dict,
     Any,
     List,
+    Union,
 )
 
 from .baseclass import PostProcessorBaseClass
@@ -37,7 +38,11 @@ class Saver(PostProcessorBaseClass):
         super().__init__(spec)
         self._time_list = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
-        self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)
+        try:
+            self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)
+        except FileExistsError as e:
+            print("Casedir exists. set `overwrite_casedir` to True to overwrite.")
+            raise
 
     def store_mesh(
             self,
@@ -65,7 +70,7 @@ class Saver(PostProcessorBaseClass):
     def update(
             self,
             time: float,
-            timestep: int,
+            timestep: Union[int, dolfin.Constant],
             data_dict: Dict[str, dolfin.Function]
     ) -> None:
         """Store solutions and perform computations for new timestep."""
@@ -75,7 +80,7 @@ class Saver(PostProcessorBaseClass):
 
         filename = self.casedir/Path("times.txt")
         with open(filename, "a") as of_handle:
-            of_handle.write("{}\n".format(float(time)))
+            of_handle.write("{} {}\n".format(timestep, float(time)))
 
     def close(self) -> None:
         """Store the times."""

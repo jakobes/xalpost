@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import (
     Any,
     Union,
+    Tuple,
 )
 
 
@@ -29,10 +30,13 @@ def read_point_values(path, name) -> np.ndarray:
         print(e)
 
 
-def load_times(path: Union[str, Path]) -> np.ndarray:
-    """Read the times and return them as a numpy array."""
+def load_times(path: Union[str, Path]) -> Tuple[np.ndarray, np.ndarray]:
+    """Read the timesteps and times and return them as numpy arrays."""
     try:
         with open(path, "r") as if_handle:
-            return np.fromiter(if_handle.read().split(), dtype="f8")
+            data = if_handle.read().split()
+            # TODO: How stupid is this casting??
+            steps, time = zip((data[0::2], data[1::2]))
+            return np.fromiter(*steps, dtype="i4"), np.fromiter(*time, dtype="f8")
     except FileNotFoundError as e:
         print(e)
