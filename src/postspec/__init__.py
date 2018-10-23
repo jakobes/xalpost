@@ -5,7 +5,6 @@ from .plot_spec import (
 )
 
 from .postprocessor import (
-    PostProcessorSpec,
     FieldSpec,
     SaverSpec,
     LoaderSpec,
