@@ -5,7 +5,6 @@ https://bitbucket.org/fenics-project/dolfin/issues/455/add-ipython-compatible-ma
 """
 
 import dolfin as df
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
@@ -27,7 +26,7 @@ def mplot_cellfunction(cell_function: df.MeshFunction) -> plt.Figure:
     return fig
 
 
-def plot_mesh_triangulation(meshtriang: df.Mesh) -> plt.Figure:
+def mplot_mesh(meshtriang: df.Mesh) -> plt.Figure:
     """Plot the meh as an unstructured grid."""
     fig, ax = plt.subplots(1)
     ax.triplot(triang, 'ko-', lw=1)
@@ -35,6 +34,7 @@ def plot_mesh_triangulation(meshtriang: df.Mesh) -> plt.Figure:
 
 
 def mplot_function(function: df.Function) -> plt.Figure:
+    """Plot a function. The kind of plot depends on the function."""
     mesh = function.function_space().mesh()
     if mesh.geometry().dim() != 2:
         raise AttributeError("Mesh must be 2D")
@@ -63,13 +63,3 @@ def mplot_function(function: df.Function) -> plt.Figure:
         V = vertex_values[mesh.num_vertices():]
         ax.quiver(X, Y, U, V)
     return fig
-
-
-if __name__ == "__main__":
-    # func = get_func()
-    # foo = mplot_function(func)
-    mesh = df.UnitSquareMesh(10, 10)
-    triang = mesh2triang(mesh)
-    plt.triplot(triang, 'bo-', lw=1)
-    plt.savefig("bar.png")
-    # foo.savefig("bar.png")

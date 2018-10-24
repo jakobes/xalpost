@@ -18,6 +18,7 @@ def plot_point_field(
         spec: PlotSpec,
         labels: Container[str] = None) -> None:
     """Plot the probes from `PointField`."""
+    # TODO: Might need to update in light of probes plot
     fig = plt.figure(figsize=spec.figsize)
     ax = fig.add_subplot(111)
 

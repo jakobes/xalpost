@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from postspec import (
-    PostProcessorSpec, SaverSpec,
+    SaverSpec,
     LoaderSpec,
     FieldSpec,
 )
