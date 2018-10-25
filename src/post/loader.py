@@ -124,12 +124,13 @@ class Loader(PostProcessorBaseClass):
 
     def load_initial_condition(
             self,
-            name_iterable: Iterable[str],
+            name: str,
             timestep: int = None
     ) -> Dict[str, dolfin.Function]:
         """Return the last computed values for the fields in `name_iterable`."""
 
         if timestep is None:
             timestep, _ = self.load_time()[-1]
-        fields = {name: next(self.load_field(name, (timestep,)))}
-        return fields
+
+        field = next(self.load_field(name, (timestep,), return_time=False))
+        return field
