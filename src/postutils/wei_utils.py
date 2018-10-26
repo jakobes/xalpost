@@ -12,7 +12,7 @@ from typing import (
     Tuple,
 )
 
-from xalbrain import (
+from dolfin import (
     Function,
 )
 
