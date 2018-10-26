@@ -2,7 +2,7 @@
 
 from typing import Dict
 
-from dolgin import (
+from dolfin import (
     parameters,
 )
 
