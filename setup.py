@@ -7,7 +7,7 @@ setup(
     author_email = "jakob@xal.no",
     packages = find_packages("src"),
     # packages = ["post", "postspec", "postfields", "postutils"],
-    package_dir = {"": "src"}
+    package_dir = {"": "src"},
     install_requires=[
         "pandas",
         "pyyaml",
