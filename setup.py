@@ -8,4 +8,8 @@ setup(
     packages = find_packages("src"),
     # packages = ["post", "postspec", "postfields", "postutils"],
     package_dir = {"": "src"}
+    install_requires=[
+        "pandas",
+        "pyyaml",
+    ]
 )
