@@ -2,7 +2,7 @@
 
 from typing import Dict
 
-from xalbrain import (
+from dolgin import (
     parameters,
 )
 
