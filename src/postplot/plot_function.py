@@ -8,6 +8,11 @@ import dolfin as df
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 
+from typing import (
+    Tuple,
+    Any
+)
+
 
 def mesh2triang(mesh: df.Mesh) -> tri.Triangulation:
     """Return an unstructured grid with the connectivity given by matplotlib
@@ -18,22 +23,29 @@ def mesh2triang(mesh: df.Mesh) -> tri.Triangulation:
     return tri.Triangulation(xy[:, 0], xy[:, 1], mesh.cells())
 
 
-def mplot_cellfunction(cell_function: df.MeshFunction) -> plt.Figure:
+def mplot_cellfunction(cell_function: df.MeshFunction) -> Tuple[plt.Figure, Any]:
     """Return a pseudocolor plot of an unstructured triangular grid."""
     fig, ax = plt.subplots(1)
     tri = mesh2triang(cell_function.mesh())
     ax.tripcolor(tri, facecolors=cell_function.array())
-    return fig
+    return fig, ax
 
 
-def mplot_mesh(meshtriang: df.Mesh) -> plt.Figure:
+def mplot_mesh(meshtriang: df.Mesh) -> Tuple[plt.Figure, Any]:
     """Plot the meh as an unstructured grid."""
     fig, ax = plt.subplots(1)
     ax.triplot(triang, 'ko-', lw=1)
-    return fig
+    return fig, ax
 
 
-def mplot_function(function: df.Function) -> plt.Figure:
+def mplot_function(
+    function: df.Function,
+    vmin=None,
+    vmax=None,
+    shading="gouraud",
+    colourbar=False,
+    colourbar_label=None
+) -> Tuple[plt.Figure, Any]:
     """Plot a function. The kind of plot depends on the function."""
     mesh = function.function_space().mesh()
     if mesh.geometry().dim() != 2:
@@ -41,15 +53,16 @@ def mplot_function(function: df.Function) -> plt.Figure:
 
     fig, ax = plt.subplots(1)
 
+    tpc = None
     # DG0 cellwise function
     if function.vector().size() == mesh.num_cells():
         colour_array = function.vector().array()
-        ax.tripcolor(mesh2triang(mesh), colour_array)
+        tpc = ax.tripcolor(mesh2triang(mesh), colour_array, vmin=vmin, vmax=vmax)
 
     # Scalar function, interpolated to vertices
     elif function.value_rank() == 0:
         colour_array = function.compute_vertex_values(mesh)
-        ax.tripcolor(mesh2triang(mesh), colour_array, shading="gouraud")
+        tpc = ax.tripcolor(mesh2triang(mesh), colour_array, shading=shading, vmin=vmin, vmax=vmax)
 
     # Vector function, interpolated to vertices
     elif function.value_rank() == 1:
@@ -61,5 +74,11 @@ def mplot_function(function: df.Function) -> plt.Figure:
         Y = mesh.coordinates()[:, 1]
         U = vertex_values[:mesh.num_vertices()]
         V = vertex_values[mesh.num_vertices():]
-        ax.quiver(X, Y, U, V)
-    return fig
+        tpc = ax.quiver(X, Y, U, V)
+
+    if colourbar is not None and tpc is not None:
+        cb = fig.colorbar(tpc)
+        if colourbar_label is not None:
+            cb.set_label(colourbar_label)
+
+    return fig, ax
