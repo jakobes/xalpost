@@ -22,8 +22,8 @@ def plot_point_field(
     fig = plt.figure(figsize=spec.figsize)
     ax = fig.add_subplot(111)
 
-    for i in range(probes.shape[1]):
-        ax.plot(times, probes[:, i], linewidth=spec.linewidth)
+    for p in probes:
+        ax.plot(times, p, linewidth=spec.linewidth)
 
     ax.set_title(spec.title, fontsize=spec.title_fs)
     ax.set_xlabel(spec.xlabel, fontsize=spec.label_fs)
@@ -31,9 +31,10 @@ def plot_point_field(
     ax.grid(spec.grid)
 
     if labels is None:
-        labels = [f"probe {i}" for i in range(probes.shape[1])]
+        labels = [f"probe {i}" for i in range(len(probes))]
     ax.legend(labels, loc=spec.label_loc)
 
     outdir = Path(spec.outdir)
     outdir.mkdir(exist_ok=True)
     fig.savefig(str(outdir / f"{spec.name}.{spec.save_format}"))
+    plt.close(fig)

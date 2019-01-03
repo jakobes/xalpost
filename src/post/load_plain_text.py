@@ -9,6 +9,11 @@ from typing import (
     Tuple,
 )
 
+from collections import namedtuple
+
+
+TimestepTuple = namedtuple("TimestepTuple", ["timestep", "time"])
+
 
 def read_point_metadata(path, name) -> Any:
     try:
@@ -20,6 +25,10 @@ def read_point_metadata(path, name) -> Any:
 
 
 def read_point_values(path, name) -> np.ndarray:
+    """Read the data from a single probe.
+
+    TODO: Integrate this into the loader.
+    """
     try:
         with open(path / Path("{}/probes_{}.txt".format(name, name)), "r") as if_handle:
             data = np.array([
@@ -30,13 +39,16 @@ def read_point_values(path, name) -> np.ndarray:
         print(e)
 
 
-def load_times(path: Union[str, Path]) -> Tuple[np.ndarray, np.ndarray]:
+def load_times(path: Union[str, Path]) -> TimestepTuple:
     """Read the timesteps and times and return them as numpy arrays."""
+    _path = Path(path)      # To be sure
     try:
-        with open(path, "r") as if_handle:
+        with open(_path / "times.txt", "r") as if_handle:
             data = if_handle.read().split()
             # TODO: How stupid is this casting??
             steps, time = zip((data[0::2], data[1::2]))
-            return np.fromiter(*steps, dtype="i4"), np.fromiter(*time, dtype="f8")
+            _my_tuple = TimestepTuple(np.fromiter(*steps, dtype="i4"), np.fromiter(*time, dtype="f8"))
+            return _my_tuple
+            # return np.fromiter(*steps, dtype="i4"), np.fromiter(*time, dtype="f8")
     except FileNotFoundError as e:
         print(e)

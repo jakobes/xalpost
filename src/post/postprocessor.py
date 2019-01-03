@@ -75,7 +75,8 @@ class PostProcessor:
         assert name in ("CellDomains", "FacetDomains"), msg
 
         filename = calsedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as meshfile:
+        # with dolfin.HDF5File(dolfin.mpi_comm_world(), filename, "r") as meshfile:
+        with dolfin.HDF5File(mesh.mpi_comm(), filename, "r") as meshfile:
             mesh_function = dolfin.MeshFunction()
             meshfile.read(mesh, f"/{name}")
         return mesh_function

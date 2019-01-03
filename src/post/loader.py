@@ -45,8 +45,8 @@ class Loader(PostProcessorBaseClass):
         Will also return cell and facet functions if present.
         """
         filename = self.casedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as meshfile:
-            mesh = dolfin.Mesh()
+        mesh = dolfin.Mesh()
+        with dolfin.HDF5File(mesh.mpi_comm(), str(filename), "r") as meshfile:
             meshfile.read(mesh, "/Mesh", False)
         return mesh
 
@@ -81,6 +81,8 @@ class Loader(PostProcessorBaseClass):
     ) -> Any:       # FIXME: return type
         """Return an iterator over the field for each timestep.
 
+        TODO: Push this back to the specific field
+
         Optionally, return the corresponding time.
         """
         metadata = self.load_metadata(name)
@@ -89,16 +91,23 @@ class Loader(PostProcessorBaseClass):
             timestep_iterable, time_iterable = self.load_time()
         mesh = self.load_mesh()
 
+        element_tuple = (
+            dolfin.interval,
+            dolfin.triangle,
+            dolfin.tetrahedron
+        )
+
         element = dolfin.FiniteElement(
             metadata["element_family"],
-            dolfin.triangle,
+            element_tuple[mesh.geometry().dim() - 1],        # zero indexed
             metadata["element_degree"]
         )
+
         V_space = dolfin.FunctionSpace(mesh, element)
         v_func = dolfin.Function(V_space)
 
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as fieldfile:
+        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
             for i in timestep_iterable:
                 if i < int(metadata["start_timestep"]):
                     continue
@@ -107,9 +116,9 @@ class Loader(PostProcessorBaseClass):
 
                 fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
                 if return_time:
-                    yield v_func, time_iterable[i]
+                    yield time_iterable[i], v_func.vector().get_local()
                 else:
-                    yield v_func
+                    yield v_func.vector().get_local()
 
     @property
     def casedir(self) -> Path:
@@ -118,7 +127,8 @@ class Loader(PostProcessorBaseClass):
 
     def load_time(self) -> Tuple[np.ndarray, np.ndarray]:
         """Return the (timesteps, times)."""
-        filename = self.casedir / Path("times.txt")
+        # filename = self.casedir / Path("times.txt")
+        filename = self.casedir
         assert filename.exists(), "Cannot find {filename}".format(filename)
         return load_times(filename)
 
