@@ -114,6 +114,7 @@ class Loader(PostProcessorBaseClass):
                 if i % int(metadata["stride_timestep"]) != 0:
                     continue
 
+                # TODO: return function, not numpy array
                 fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
                 if return_time:
                     yield time_iterable[i], v_func.vector().get_local()
@@ -129,18 +130,21 @@ class Loader(PostProcessorBaseClass):
         """Return the (timesteps, times)."""
         # filename = self.casedir / Path("times.txt")
         filename = self.casedir
-        assert filename.exists(), "Cannot find {filename}".format(filename)
+        assert filename.exists(), "Cannot find {filename}".format(filename=filename)
         return load_times(filename)
 
     def load_initial_condition(
             self,
             name: str,
-            timestep: int = None
+            timestep: int = None,
+            timestep_index: int = None
     ) -> Dict[str, dolfin.Function]:
         """Return the last computed values for the fields in `name_iterable`."""
 
-        if timestep is None:
-            timestep, _ = self.load_time()[-1]
+        if timestep_index is not None:
+            timestep, time = self.load_time()[timestep_index]
+        elif timestep is None:
+            timestep, time = self.load_time()[-1]
 
         field = next(self.load_field(name, (timestep,), return_time=False))
         return field
