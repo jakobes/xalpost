@@ -164,4 +164,5 @@ class Loader(PostProcessorBaseClass):
             fieldfile.read(v_func, sorted_field_names[-1])
 
         timestep = metadata["start_timestep"] + metadata["stride_timestep"]*len(sorted_field_names)
-        return v_func.vector().get_local(), timestep
+        _, time = load_times(self.casedir)
+        return v_func.vector().get_local(), time[timestep]
