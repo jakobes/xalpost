@@ -63,7 +63,11 @@ class Field(FieldBaseClass):
             # fieldfile = dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "w")
             fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w")
         fieldfile.write(data, "{name}{timestep}".format(name=self.name, timestep=timestep))
+        fieldfile.flush()
         self._datafile_cache[_key] = fieldfile
+        # filename = self.path/"{name}.hdf5".format(name=self.name)
+        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w") as fieldfile:
+        #     fieldfile.write(data, "{name}{timestep}".format(name=self.name, timestep=timestep))
 
     def _store_field_xdmf(
             self,

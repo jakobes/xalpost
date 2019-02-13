@@ -2,6 +2,7 @@
 
 import dolfin
 import logging
+import h5py
 
 import numpy as np
 
@@ -107,18 +108,26 @@ class Loader(PostProcessorBaseClass):
         v_func = dolfin.Function(V_space)
 
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
-        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
-            for i in timestep_iterable:
-                if i < int(metadata["start_timestep"]):
-                    continue
-                if i % int(metadata["stride_timestep"]) != 0:
-                    continue
-                # TODO: return function, not numpy array
-                fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
-                if return_time:
-                    yield time_iterable[i], v_func.vector().get_local()
-                else:
-                    yield v_func.vector().get_local()
+        with h5py.File(filename, "r") as hdf5_file:
+            sorted_field_names = sorted(hdf5_file.keys(), key=lambda x: int(x[1:]))
+            print(sorted_field_names)
+        assert False
+
+        # filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
+        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+
+            # for i in timestep_iterable:
+
+            #     if i < int(metadata["start_timestep"]):
+            #         continue
+            #     if i % int(metadata["stride_timestep"]) != 0:
+            #         continue
+            #     # TODO: return function, not numpy array
+            #     fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
+            #     if return_time:
+            #         yield time_iterable[i], v_func.vector().get_local()
+            #     else:
+            #         yield v_func.vector().get_local()
 
     @property
     def casedir(self) -> Path:
@@ -155,7 +164,6 @@ class Loader(PostProcessorBaseClass):
         V_space = dolfin.FunctionSpace(mesh, element)
         v_func = dolfin.Function(V_space)
 
-        import h5py
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
         with h5py.File(filename, "r") as hdf5_file:
             sorted_field_names = sorted(hdf5_file.keys(), key=lambda x: int(x[1:]))
