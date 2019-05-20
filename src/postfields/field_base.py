@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import logging
-import dolfin 
+import dolfin
 
 from postspec import FieldSpec
 
@@ -14,6 +14,7 @@ from typing import (
 
 
 LOGGER = logging.getLogger(__name__)
+
 
 class FieldBaseClass:
     """A wrapper around dolfin Functions used for the `PostProcessor`."""
@@ -54,7 +55,7 @@ class FieldBaseClass:
         self._first_compute = b
 
     @property
-    def path(self) -> Path: 
+    def path(self) -> Path:
         """Return relative path."""
         return self._path
 

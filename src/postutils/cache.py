@@ -26,7 +26,7 @@ def save_cache(
         clean_cache: bool = False
 ) -> None:
     """Save the data in a cache. Updates the cache if one with that name exists.
-    
+
     data_dict is expected to be on the form (`column name`: `column`).
     """
     if Path(cache_name).exists() and not clean_cache:

@@ -24,6 +24,7 @@ from typing import (
     Any,
     Iterable,
     Tuple,
+    Iterator,
 )
 
 from .baseclass import PostProcessorBaseClass
@@ -78,8 +79,7 @@ class Loader(PostProcessorBaseClass):
             self,
             name: str,
             timestep_iterable: Iterable[int] = None,
-            return_time: bool = True,
-    ) -> Any:       # FIXME: return type
+    ) -> Iterator[Tuple[float, dolfin.Function]]:       # FIXME: return type
         """Return an iterator over the field for each timestep.
 
         TODO: Push this back to the specific field
@@ -88,8 +88,10 @@ class Loader(PostProcessorBaseClass):
         """
         metadata = self.load_metadata(name)
 
-        if timestep_iterable is None or return_time:
-            timestep_iterable, time_iterable = self.load_time()
+        _timestep_iterable = timestep_iterable
+        timestep_iterable, time_iterable = self.load_time()
+        if _timestep_iterable is None:
+            _timestep_iterable = timestep_iterable
         mesh = self.load_mesh()
 
         element_tuple = (
@@ -108,26 +110,53 @@ class Loader(PostProcessorBaseClass):
         v_func = dolfin.Function(V_space)
 
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
-        with h5py.File(filename, "r") as hdf5_file:
-            sorted_field_names = sorted(hdf5_file.keys(), key=lambda x: int(x[1:]))
-            print(sorted_field_names)
-        assert False
+        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+            for i in _timestep_iterable:
+                if i < int(metadata["start_timestep"]):
+                    continue
+                if i % int(metadata["stride_timestep"]) != 0:
+                    continue
+                # TODO: return function, not numpy array
+                fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
+                yield time_iterable[i], v_func.vector()
 
-        # filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
-        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+    def load_checkpoint(
+            self,
+            name: str,
+            timestep_iterable: Iterable[int] = None,
+    ) -> Iterator[Tuple[float, dolfin.Function]]:
+        metadata = self.load_metadata(name)
 
-            # for i in timestep_iterable:
+        _timestep_iterable = timestep_iterable
+        timestep_iterable, time_iterable = self.load_time()
+        if _timestep_iterable is None:
+            _timestep_iterable = timestep_iterable
+        mesh = self.load_mesh()
 
-            #     if i < int(metadata["start_timestep"]):
-            #         continue
-            #     if i % int(metadata["stride_timestep"]) != 0:
-            #         continue
-            #     # TODO: return function, not numpy array
-            #     fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
-            #     if return_time:
-            #         yield time_iterable[i], v_func.vector().get_local()
-            #     else:
-            #         yield v_func.vector().get_local()
+        element_tuple = (
+            dolfin.interval,
+            dolfin.triangle,
+            dolfin.tetrahedron
+        )
+
+        element = dolfin.FiniteElement(
+            metadata["element_family"],
+            element_tuple[mesh.geometry().dim() - 1],        # zero indexed
+            metadata["element_degree"]
+        )
+
+        V_space = dolfin.FunctionSpace(mesh, element)
+        v_func = dolfin.Function(V_space)
+
+        filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
+        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+            for i, _time in enumerate(_timestep_iterable):
+                if _time < int(metadata["start_timestep"]):
+                    continue
+                if _time % int(metadata["stride_timestep"]) != 0:
+                    continue
+                fieldfile.read_checkpoint(infunc, self.name, counter=i)
+                yield time_iterable[i], v_func.vector()
 
     @property
     def casedir(self) -> Path:

@@ -3,14 +3,14 @@
 import numpy as np
 
 from typing import (
-    List,
+    Sequence,
     Tuple,
 )
 
 
 def as_mytype(
         data: np.ndarray,
-        new_type: List[Tuple[str, str]],
+        new_type: Sequence[Tuple[str, str]],
         mask: np.ndarray = None
 ) -> np.ndarray:
     """Convert array to a structured array withspecified type.

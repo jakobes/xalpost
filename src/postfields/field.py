@@ -13,7 +13,6 @@ from typing import (
     List,
     Iterable,
 )
-
 from .field_base import FieldBaseClass
 
 
@@ -31,8 +30,8 @@ class Field(FieldBaseClass):
         if int(timestep) % int(self.spec.stride_timestep) != 0:
             return
 
-        if self.first_compute:
-            self.first_compute = False
+        if self._first_compute:
+            self._first_compute = False
             self._path.mkdir(parents=False, exist_ok=True)
 
             # Update spec with element specifications
@@ -45,8 +44,12 @@ class Field(FieldBaseClass):
 
         if "hdf5" in self.spec.save_as:
             self._store_field_hdf5(timestep, time, data)
+
         if "xdmf" in self.spec.save_as:
             self._store_field_xdmf(timestep, time, data)
+
+        if "checkpoint" in self.spec.save_as:
+            self._checkpoint(timestep, time, data)
 
     def _store_field_hdf5(
             self,
@@ -83,7 +86,7 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path/"{name}.xdmf".format(name=self.name)
+            filename = self.path / "{name}.xdmf".format(name=self.name)
             # fieldfile = dolfin.XDMFFile(dolfin.mpi_comm_world(), str(filename))
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
@@ -91,6 +94,29 @@ class Field(FieldBaseClass):
             fieldfile.parameters["flush_output"] = flush_output
 
         fieldfile.write(data, float(time))
+        self._datafile_cache[key] = fieldfile
+
+    def _checkpoint(
+            self,
+            timestep: int,
+            time: float,
+            data: dolfin.Function,
+            flush_output: True,
+            rewrite_mesh: bool = False,
+            share_mesh: bool = True,
+    ) -> None:
+        key = "checkpoint"
+        if key in self._datafile_cache:
+            fieldfile = self._datafile_cache[key]
+        else:
+            filename = self.path / "{path}.xdmf".format(name=self.name)
+            fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
+            # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
+            # fieldfile.parameters["functions_share_mesh"] = share_mesh
+            # fieldfile.parameters["flush_output"] = flush_output
+
+        # fieldfile.write(data, float(time))
+        fieldfile.write_checkpoint(data, self.name, time_step=float(time), append=True)
         self._datafile_cache[key] = fieldfile
 
     def load(self):
