@@ -82,6 +82,16 @@ class Saver(PostProcessorBaseClass):
         with open(filename, "a") as of_handle:
             of_handle.write("{} {}\n".format(timestep, float(time)))
 
+    def store_initial_condition(self, data_dict) -> None:
+        time = 0.0
+        timestep = 0
+        self._time_list.append(time)
+        for name, data in data_dict.items():
+            self._fields[name].update(timestep, time, data)
+
+        with (self.casedir / Path("times.txt")).open("a") as of_handle:
+            of_handle.write("{} {}\n".format(timestep, float(time)))
+
     def close(self) -> None:
         """Store the times."""
         for _, field in self._fields.items():

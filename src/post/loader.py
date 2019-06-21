@@ -75,7 +75,7 @@ class Loader(PostProcessorBaseClass):
         """Read the metadata associated with a field name."""
         return load_metadata(self.casedir/Path("{name}/metadata_{name}.yaml".format(name=name)))
 
-    def load_field(
+    def _load_field(
             self,
             name: str,
             timestep_iterable: Iterable[int] = None,
