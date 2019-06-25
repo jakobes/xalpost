@@ -101,7 +101,7 @@ class Field(FieldBaseClass):
             timestep: int,
             time: float,
             data: dolfin.Function,
-            flush_output: True,
+            flush_output: bool = True,
             rewrite_mesh: bool = False,
             share_mesh: bool = True,
     ) -> None:
@@ -109,7 +109,7 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path / "{path}.xdmf".format(name=self.name)
+            filename = self.path / "{name}.xdmf".format(name=self.name)
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             # fieldfile.parameters["functions_share_mesh"] = share_mesh
