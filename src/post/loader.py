@@ -75,11 +75,11 @@ class Loader(PostProcessorBaseClass):
         """Read the metadata associated with a field name."""
         return load_metadata(self.casedir/Path("{name}/metadata_{name}.yaml".format(name=name)))
 
-    def _load_field(
+    def load_field(
             self,
             name: str,
             timestep_iterable: Iterable[int] = None,
-    ) -> Iterator[Tuple[float, dolfin.Function]]:       # FIXME: return type
+    ) -> Iterator[Tuple[float, dolfin.Function]]:
         """Return an iterator over the field for each timestep.
 
         TODO: Push this back to the specific field
@@ -116,9 +116,9 @@ class Loader(PostProcessorBaseClass):
                     continue
                 if i % int(metadata["stride_timestep"]) != 0:
                     continue
-                # TODO: return function, not numpy array
+                # TODO: return function, not numpy array, and not petsc vector
                 fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
-                yield time_iterable[i], v_func.vector()
+                yield time_iterable[i], v_func
 
     def load_checkpoint(
             self,

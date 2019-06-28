@@ -34,7 +34,7 @@ def mplot_cellfunction(cell_function: df.MeshFunction) -> Tuple[plt.Figure, Any]
 def mplot_mesh(meshtriang: df.Mesh) -> Tuple[plt.Figure, Any]:
     """Plot the meh as an unstructured grid."""
     fig, ax = plt.subplots(1)
-    ax.triplot(triang, 'ko-', lw=1)
+    ax.triplot(meshtriang, 'ko-', lw=1)
     return fig, ax
 
 
@@ -76,7 +76,7 @@ def mplot_function(
         V = vertex_values[mesh.num_vertices():]
         tpc = ax.quiver(X, Y, U, V)
 
-    if colourbar is not None and tpc is not None:
+    if colourbar and tpc is not None:
         cb = fig.colorbar(tpc)
         if colourbar_label is not None:
             cb.set_label(colourbar_label)

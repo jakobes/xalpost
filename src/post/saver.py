@@ -2,6 +2,7 @@
 
 import dolfin
 import logging
+import shutil
 
 import numpy as np
 
@@ -38,11 +39,15 @@ class Saver(PostProcessorBaseClass):
         super().__init__(spec)
         self._time_list = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
+
+
+        if self._casedir.exists() and self._spec.overwrite_casedir:
+            shutil.rmtree(self._casedir)
+
         try:
             self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)
-        except FileExistsError as e:
-            print("Casedir exists. set `overwrite_casedir` to True to overwrite.")
-            raise
+        except:
+            raise FileExistsError("Casedir exists. set `overwrite_casedir` to True to overwrite.")
 
     def store_mesh(
             self,
