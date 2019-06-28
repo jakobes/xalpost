@@ -20,3 +20,8 @@ from .assigner import (
 
 from .store_sourcefiles import store_sourcefiles
 from .identifier import simulation_directory
+
+from .probe_points import (
+    circle_points,
+    grid_points,
+)
