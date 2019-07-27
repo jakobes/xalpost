@@ -5,6 +5,7 @@ import logging
 import h5py
 
 import numpy as np
+import dolfin as df
 
 from postspec import (
     LoaderSpec,
@@ -155,7 +156,7 @@ class Loader(PostProcessorBaseClass):
                     continue
                 if _time % int(metadata["stride_timestep"]) != 0:
                     continue
-                fieldfile.read_checkpoint(infunc, self.name, counter=i)
+                fieldfile.read_checkpoint(v_func, self.name, counter=i)
                 yield time_iterable[i], v_func.vector()
 
     @property
@@ -173,33 +174,36 @@ class Loader(PostProcessorBaseClass):
     def load_initial_condition(
             self,
             name: str,
+            V_space: df.FunctionSpace = None
     ) -> Dict[str, dolfin.Function]:
         """Return the last computed values for the fields in `name_iterable`."""
         metadata = self.load_metadata(name)
         mesh = self.load_mesh()
 
-        element_tuple = (
-            dolfin.interval,
-            dolfin.triangle,
-            dolfin.tetrahedron
-        )
+        if V_space is None:
+            element_tuple = (
+                dolfin.interval,
+                dolfin.triangle,
+                dolfin.tetrahedron
+            )
 
-        element = dolfin.FiniteElement(
-            metadata["element_family"],
-            element_tuple[mesh.geometry().dim() - 1],        # zero indexed
-            metadata["element_degree"]
-        )
+            element = dolfin.FiniteElement(
+                metadata["element_family"],
+                element_tuple[mesh.geometry().dim() - 1],        # zero indexed
+                metadata["element_degree"]
+            )
 
-        V_space = dolfin.FunctionSpace(mesh, element)
+            V_space = dolfin.FunctionSpace(mesh, element)
         v_func = dolfin.Function(V_space)
 
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
         with h5py.File(filename, "r") as hdf5_file:
-            sorted_field_names = sorted(hdf5_file.keys(), key=lambda x: int(x[1:]))
+            sorted_field_names = sorted(hdf5_file.keys(), key=lambda x: int("".join(filter(str.isdigit, x))))
 
         with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
             fieldfile.read(v_func, sorted_field_names[-1])
 
-        timestep = metadata["start_timestep"] + metadata["stride_timestep"]*len(sorted_field_names)
+        timestep = max(0, metadata["start_timestep"])
+        timestep += metadata["stride_timestep"]*(len(sorted_field_names) - 1)
         _, time = load_times(self.casedir)
-        return v_func.vector().get_local(), time[timestep]
+        return v_func, time[timestep]

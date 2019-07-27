@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from typing import (
     NamedTuple,
     Tuple,
@@ -6,13 +8,13 @@ from typing import (
 
 class SaverSpec(NamedTuple):
     """Specifications for `post.Saver`."""
-    casedir: str
+    casedir: Path
     overwrite_casedir: bool = False
 
 
 class LoaderSpec(NamedTuple):
     """Specifications for `post.Saver`."""
-    casedir: str
+    casedir: Path
 
 
 class PostProcessorSpec(NamedTuple):
