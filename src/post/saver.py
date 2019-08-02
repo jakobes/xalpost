@@ -40,9 +40,9 @@ class Saver(PostProcessorBaseClass):
         self._time_list = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
 
-
-        if self._casedir.exists() and self._spec.overwrite_casedir:
-            shutil.rmtree(self._casedir)
+        # Can this cause a crash?
+        # if self._casedir.exists() and self._spec.overwrite_casedir:
+        #     shutil.rmtree(self._casedir)
 
         try:
             self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)

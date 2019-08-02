@@ -62,7 +62,7 @@ class PointField(FieldBaseClass):
 
     def compute(self, data) -> np.ndarray:
         """Return the value of all probes."""
-        # FIXME: This probably does npt work in parallel
+        # FIXME: This probably does not work in parallel
 
         # Make sure that `before_first_compute` is called first
         self._probes(data)      # Evaluate all probes.
