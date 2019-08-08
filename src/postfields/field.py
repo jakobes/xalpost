@@ -16,8 +16,61 @@ from typing import (
 from .field_base import FieldBaseClass
 
 
-
 LOGGER = logging.getLogger(__name__)
+
+
+# --- I/O stuff ---
+class _HDF5Link:
+    """Helper class for creating links in HDF5-files."""
+    cpp_link_module = None
+
+    def __init__(self):
+        cpp_link_code = """
+        #include <hdf5.h>
+
+        // dolfin headers
+        #include <dolfin/io/HDF5Interface.h>
+        #include <dolfin/common/MPI.h>
+
+        // pybind headers
+        #include <pybind11/pybind11.h>
+
+        namespace py = pybind11;
+
+        namespace dolfin
+        {
+        void link_dataset(const MPI_Comm comm,
+                          const std::string hdf5_filename,
+                          const std::string link_from,
+                          const std::string link_to, bool use_mpiio)
+        {
+            hid_t hdf5_file_id = HDF5Interface::open_file(comm, hdf5_filename, "a", use_mpiio);
+            herr_t status = H5Lcreate_hard(hdf5_file_id, link_from.c_str(), H5L_SAME_LOC,
+                                link_to.c_str(), H5P_DEFAULT, H5P_DEFAULT);
+            dolfin_assert(status != HDF5_FAIL);
+
+            HDF5Interface::close_file(hdf5_file_id);
+        }
+
+        PYBIND11_MODULE(SIGNATURE, m) {
+            m.def("link_dataset", &link_dataset);
+        }
+
+        }   // end namespace dolfin
+        """
+        # self.cpp_link_module = dolfin.compile_cpp_code(cpp_link_code, additional_system_headers=["dolfin/io/HDF5Interface.h"])
+        self.cpp_link_module = dolfin.compile_cpp_code(cpp_link_code)
+
+    def link(self, hdf5filename, link_from, link_to):
+        "Create link in hdf5file."
+        use_mpiio = dolfin.MPI.size(dolfin.MPI.comm_world) > 1
+        self.cpp_link_module.link_dataset(0, hdf5filename, link_from, link_to, use_mpiio)
+
+        # TODO: Dolfin uses a custom caster for the MPI communicator. Move to separate extension module
+        # self.cpp_link_module.link_dataset(dolfin.MPI.comm_world, hdf5filename, link_from, link_to, use_mpiio)
+
+
+hdf5_link = _HDF5Link().link
 
 
 class Field(FieldBaseClass):
@@ -59,18 +112,24 @@ class Field(FieldBaseClass):
     ) -> None:
         """Save as hdf5."""
         _key = "hdf5"
-        if _key in self._datafile_cache:
-            fieldfile = self._datafile_cache[_key]
+        filename = self.path/"{name}.hdf5".format(name=self.name)
+        if filename.exists():
+            fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "a")
         else:
-            filename = self.path/"{name}.hdf5".format(name=self.name)
-            # fieldfile = dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "w")
             fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w")
-        fieldfile.write(data, "{name}{timestep}".format(name=self.name, timestep=timestep))
-        fieldfile.flush()
-        self._datafile_cache[_key] = fieldfile
-        # filename = self.path/"{name}.hdf5".format(name=self.name)
-        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w") as fieldfile:
-        #     fieldfile.write(data, "{name}{timestep}".format(name=self.name, timestep=timestep))
+
+        if not fieldfile.has_dataset(self.name):
+            fieldfile.write(data, self.name)
+
+        if not fieldfile.has_dataset("mesh"):
+            fieldfile.write(data.function_space().mesh(), "mesh")
+
+        fieldfile.write(data.vector(), self.name + str(timestep) + "/vector")
+
+        # Link information about function space from hash-dataset
+        hdf5_link(str(filename), self.name + "/x_cell_dofs", self.name + str(timestep) + "/x_cell_dofs")
+        hdf5_link(str(filename), self.name + "/cell_dofs", self.name + str(timestep) + "/cell_dofs")
+        hdf5_link(str(filename), self.name + "/cells", self.name + str(timestep) + "/cells")
 
     def _store_field_xdmf(
             self,
@@ -109,14 +168,14 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path / "{name}.xdmf".format(name=self.name)
+            filename = self.path / "{name}_chk.xdmf".format(name=self.name)
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             # fieldfile.parameters["functions_share_mesh"] = share_mesh
             # fieldfile.parameters["flush_output"] = flush_output
 
         # fieldfile.write(data, float(time))
-        fieldfile.write_checkpoint(data, self.name, time_step=float(time), append=True)
+        fieldfile.write_checkpoint(data, self.name, time_step=float(time), append=False)
         self._datafile_cache[key] = fieldfile
 
     def load(self):

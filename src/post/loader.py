@@ -117,7 +117,6 @@ class Loader(PostProcessorBaseClass):
                     continue
                 if i % int(metadata["stride_timestep"]) != 0:
                     continue
-                # TODO: return function, not numpy array, and not petsc vector
                 fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
                 yield time_iterable[i], v_func
 
