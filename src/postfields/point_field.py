@@ -72,9 +72,7 @@ class PointField(FieldBaseClass):
 
     def update(self, timestep: int, time: float, data: dolfin.Function) -> None:
         """Update the data."""
-        if timestep < self.spec.start_timestep:
-            return
-        if int(timestep) % int(self.spec.stride_timestep) != 0:
+        if not self.save_this_timestep(timestep, time):
             return
 
         if self.first_compute:              # Setup everything

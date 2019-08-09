@@ -35,6 +35,13 @@ class FieldBaseClass:
         self._first_compute: bool = True
         self._datafile_cache: Dict[str, Any] = {}
 
+    def save_this_timestep(self, timestep: int, time: float) -> bool:
+        if timestep < self.spec.start_timestep:
+            return False
+        if int(timestep) % int(self.spec.stride_timestep) == 0:
+            return True
+        return False
+
     @property
     def name(self) -> str:
         """Field name."""

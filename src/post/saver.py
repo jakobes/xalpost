@@ -23,6 +23,7 @@ from typing import (
     Any,
     List,
     Union,
+    Iterable
 )
 
 from .baseclass import PostProcessorBaseClass
@@ -85,6 +86,9 @@ class Saver(PostProcessorBaseClass):
         filename = self.casedir/Path("times.txt")
         with open(filename, "a") as of_handle:
             of_handle.write("{} {}\n".format(timestep, float(time)))
+
+    def update_this_timestep(self, *, field_names: Iterable[str], timestep: int, time: float) -> bool:
+        return any([self._fields[name].save_this_timestep(timestep, time) for name in field_names])
 
     def store_initial_condition(self, data_dict) -> None:
         time = 0.0
