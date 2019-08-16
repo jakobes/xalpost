@@ -61,7 +61,7 @@ class _HDF5Link:
         # self.cpp_link_module = dolfin.compile_cpp_code(cpp_link_code, additional_system_headers=["dolfin/io/HDF5Interface.h"])
         self.cpp_link_module = dolfin.compile_cpp_code(cpp_link_code)
 
-    def link(self, hdf5filename, link_from, link_to):
+    def __call__(self, hdf5filename, link_from, link_to):
         "Create link in hdf5file."
         use_mpiio = dolfin.MPI.size(dolfin.MPI.comm_world) > 1
         self.cpp_link_module.link_dataset(0, hdf5filename, link_from, link_to, use_mpiio)
@@ -70,7 +70,7 @@ class _HDF5Link:
         # self.cpp_link_module.link_dataset(dolfin.MPI.comm_world, hdf5filename, link_from, link_to, use_mpiio)
 
 
-hdf5_link = _HDF5Link().link
+hdf5_link = _HDF5Link()
 
 
 class Field(FieldBaseClass):
