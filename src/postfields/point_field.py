@@ -58,6 +58,7 @@ class PointField(FieldBaseClass):
             fs_dim=fs_dim,
         )
         assert fs_dim == point_dim, msg
+        function_space = data.function_space().sub(self._spec.sub_field_index)
         self._probes = self._ft.Probes(self._points.flatten(), function_space)
 
     def compute(self, data) -> np.ndarray:
@@ -65,7 +66,7 @@ class PointField(FieldBaseClass):
         # FIXME: This probably does not work in parallel
 
         # Make sure that `before_first_compute` is called first
-        self._probes(data)      # Evaluate all probes.
+        self._probes(data.sub(self._spec.sub_field_index))
         results = self._probes.array()
         self._probes.clear()        # Clear or bad things happen!
         return results
@@ -88,10 +89,8 @@ class PointField(FieldBaseClass):
             spec_dict["element_degree"] = element.degree()
 
             plist = [tuple(map(float, p)) for p in self._points]      # TODO: Untested
-            # # spec_dict["point"] = [tuple(map(float, tuple(p))) for p in self._points]
             spec_dict["point"] = plist
 
-            # spec_dict["point"] = list(map(tuple, self._points))
             store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
 
         with open(self.path/Path("probes_{name}.txt".format(name=self.name)), "a") as of_handle:

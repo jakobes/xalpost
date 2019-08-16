@@ -31,3 +31,4 @@ class FieldSpec(NamedTuple):
     stride_timestep: int = 1    # Save every `stride_timestep`
     element_family: str = None
     element_degree: int = None
+    sub_field_index: int = None     # The index of the subfunction space
