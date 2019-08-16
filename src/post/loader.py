@@ -197,12 +197,15 @@ class Loader(PostProcessorBaseClass):
 
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
         with h5py.File(filename, "r") as hdf5_file:
-            sorted_field_names = sorted(hdf5_file.keys(), key=lambda x: int("".join(filter(str.isdigit, x))))
+            sorted_field_names = sorted(filter(lambda x: x not in (name ,"mesh"), hdf5_file.keys()),
+                                        key=lambda x: int("".join(filter(str.isdigit, x))))
 
         with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
             fieldfile.read(v_func, sorted_field_names[-1])
 
-        timestep = max(0, metadata["start_timestep"])
-        timestep += metadata["stride_timestep"]*(len(sorted_field_names) - 1)
+        timestep = int("".join(filter(str.isdigit, sorted_field_names[-1])))
+
+        # timestep = max(0, metadata["start_timestep"])
+        # timestep += metadata["stride_timestep"]*(len(sorted_field_names) - 1)
         _, time = load_times(self.casedir)
-        return v_func, time[timestep]
+        return v_func, timestep, time[timestep]

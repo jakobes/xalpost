@@ -99,8 +99,8 @@ class PointField(FieldBaseClass):
             _data = self.compute(data)
             if self._points.shape[0] == 1:
                 _data = (_data,)
-            _data_format_str = ", ".join(("{}",)*len(_data))
-            of_handle.write(_data_format_str.format(*_data))
+            _data_format_str = ", ".join(("{}",)*(len(_data) + 1))
+            of_handle.write(_data_format_str.format(float(time), *_data))
             of_handle.write("\n")
 
         self._results.append(self.compute(data))
