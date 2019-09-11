@@ -30,7 +30,7 @@ def simulation_directory(
         overwrite_data: Overwrite existing directory. Usefull if restarting simulations.
     """
     # Check that the storage directory exists
-    _home = home
+    _home = Path(home)
     outdirectory = _home / directory_name
     outdirectory.resolve()      # is this necessary? Probably, if home is provided by user
     outdirectory.mkdir(parents=True, exist_ok=True)
