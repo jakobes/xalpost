@@ -12,7 +12,7 @@ from typing import (
 def simulation_directory(
     *,
     parameters: Dict[Any, Any],
-    home: Path = None,
+    home: Path,
     directory_name: str = ".simulations",
     key_length: int = 8,
     overwrite_data: bool = False
@@ -30,8 +30,6 @@ def simulation_directory(
         overwrite_data: Overwrite existing directory. Usefull if restarting simulations.
     """
     # Check that the storage directory exists
-    if home is None:
-        home = Path.home()
     _home = home
     outdirectory = _home / directory_name
     outdirectory.resolve()      # is this necessary? Probably, if home is provided by user
