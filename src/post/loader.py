@@ -80,6 +80,7 @@ class Loader(PostProcessorBaseClass):
             self,
             name: str,
             timestep_iterable: Iterable[int] = None,
+            vector: bool = False,
     ) -> Iterator[Tuple[float, dolfin.Function]]:
         """Return an iterator over the field for each timestep.
 
@@ -101,11 +102,18 @@ class Loader(PostProcessorBaseClass):
             dolfin.tetrahedron
         )
 
-        element = dolfin.FiniteElement(
-            metadata["element_family"],
-            element_tuple[mesh.geometry().dim() - 1],        # zero indexed
-            metadata["element_degree"]
-        )
+        if vector:
+            element = dolfin.VectorElement(
+                metadata["element_family"],
+                element_tuple[mesh.geometry().dim() - 1],
+                metadata["element_degree"]
+            )
+        else:
+            element = dolfin.FiniteElement(
+                metadata["element_family"],
+                element_tuple[mesh.geometry().dim() - 1],        # zero indexed
+                metadata["element_degree"]
+            )
 
         V_space = dolfin.FunctionSpace(mesh, element)
         v_func = dolfin.Function(V_space)

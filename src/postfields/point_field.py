@@ -6,6 +6,7 @@ Thanks to Øyvind Evju and cbcpost (bitbucket.org/simula_cbc/cbcpost).
 """
 
 from pathlib import Path
+from time import perf_counter
 
 
 import logging
@@ -94,7 +95,6 @@ class PointField(FieldBaseClass):
             store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
 
         with open(self.path/Path("probes_{name}.txt".format(name=self.name)), "a") as of_handle:
-            # TODO: Who knows whether this works
             _data = self.compute(data)
             if self._points.shape[0] == 1:
                 _data = (_data,)
