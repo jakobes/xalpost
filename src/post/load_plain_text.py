@@ -29,14 +29,11 @@ def read_point_values(path, name) -> np.ndarray:
 
     TODO: Integrate this into the loader.
     """
-    try:
-        with open(path / Path("{}/probes_{}.txt".format(name, name)), "r") as if_handle:
-            data = np.array([
-                np.fromiter(line.strip().split(","), dtype="f8") for line in if_handle.readlines()
-            ])
-        return data
-    except FileNotFoundError as e:
-        print(e)
+    with open(path / Path("{}/probes_{}.txt".format(name, name)), "r") as if_handle:
+        data = np.array([
+            np.fromiter(line.strip().split(","), dtype="f8") for line in if_handle.readlines()
+        ])
+    return data
 
 
 def load_times(path: Union[str, Path]) -> TimestepTuple:
