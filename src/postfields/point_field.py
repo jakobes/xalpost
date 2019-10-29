@@ -59,7 +59,11 @@ class PointField(FieldBaseClass):
             fs_dim=fs_dim,
         )
         assert fs_dim == point_dim, msg
-        function_space = data.function_space().sub(self._spec.sub_field_index)
+
+        if self._spec.sub_field_index is not None:
+            function_space = data.function_space().sub(self._spec.sub_field_index)
+        else:
+            function_space = data.function_space())
         self._probes = self._ft.Probes(self._points.flatten(), function_space)
 
     def compute(self, data) -> np.ndarray:
