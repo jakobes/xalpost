@@ -67,7 +67,10 @@ class PointField(FieldBaseClass):
         # FIXME: This probably does not work in parallel
 
         # Make sure that `before_first_compute` is called first
-        self._probes(data.sub(self._spec.sub_field_index))
+        if self._spec.sub_field_index is None:
+            self._probes(data.sub(self._spec.sub_field_index))
+        else:
+            self._probes(data)
         results = self._probes.array()
         self._probes.clear()        # Clear or bad things happen!
         return results
