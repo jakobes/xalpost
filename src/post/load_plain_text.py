@@ -24,12 +24,12 @@ def read_point_metadata(path, name) -> Any:
         print("Could not find metadata")
 
 
-def read_point_values(path, name) -> np.ndarray:
+def read_point_values(path) -> np.ndarray:
     """Read the data from a single probe.
 
     TODO: Integrate this into the loader.
     """
-    with open(path / Path("{}/probes_{}.txt".format(name, name)), "r") as if_handle:
+    with path.open("r") as if_handle:
         data = np.array([
             np.fromiter(line.strip().split(","), dtype="f8") for line in if_handle.readlines()
         ])
