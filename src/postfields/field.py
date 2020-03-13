@@ -70,7 +70,7 @@ class _HDF5Link:
         # self.cpp_link_module.link_dataset(dolfin.MPI.comm_world, hdf5filename, link_from, link_to, use_mpiio)
 
 
-hdf5_link = _HDF5Link()
+# hdf5_link = _HDF5Link()
 
 
 class Field(FieldBaseClass):
@@ -126,9 +126,9 @@ class Field(FieldBaseClass):
         fieldfile.write(data.vector(), self.name + str(timestep) + "/vector")
 
         # Link information about function space from hash-dataset
-        hdf5_link(str(filename), self.name + "/x_cell_dofs", self.name + str(timestep) + "/x_cell_dofs")
-        hdf5_link(str(filename), self.name + "/cell_dofs", self.name + str(timestep) + "/cell_dofs")
-        hdf5_link(str(filename), self.name + "/cells", self.name + str(timestep) + "/cells")
+        # hdf5_link(str(filename), self.name + "/x_cell_dofs", self.name + str(timestep) + "/x_cell_dofs")
+        # hdf5_link(str(filename), self.name + "/cell_dofs", self.name + str(timestep) + "/cell_dofs")
+        # hdf5_link(str(filename), self.name + "/cells", self.name + str(timestep) + "/cells")
         fieldfile.close()
 
     def _store_field_xdmf(

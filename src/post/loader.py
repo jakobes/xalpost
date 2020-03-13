@@ -2,7 +2,7 @@
 
 import dolfin
 import logging
-import h5py
+# import h5py
 
 import numpy as np
 import dolfin as df
@@ -178,42 +178,42 @@ class Loader(PostProcessorBaseClass):
         assert filename.exists(), "Cannot find {filename}".format(filename=filename)
         return load_times(filename)
 
-    def load_initial_condition(
-            self,
-            name: str,
-            V_space: df.FunctionSpace = None
-    ) -> Dict[str, dolfin.Function]:
-        """Return the last computed values for the fields in `name_iterable`."""
-        metadata = self.load_metadata(name)
-        mesh = self.load_mesh()
+    # def load_initial_condition(
+    #         self,
+    #         name: str,
+    #         V_space: df.FunctionSpace = None
+    # ) -> Dict[str, dolfin.Function]:
+    #     """Return the last computed values for the fields in `name_iterable`."""
+    #     metadata = self.load_metadata(name)
+    #     mesh = self.load_mesh()
 
-        if V_space is None:
-            element_tuple = (
-                dolfin.interval,
-                dolfin.triangle,
-                dolfin.tetrahedron
-            )
+    #     if V_space is None:
+    #         element_tuple = (
+    #             dolfin.interval,
+    #             dolfin.triangle,
+    #             dolfin.tetrahedron
+    #         )
 
-            element = dolfin.FiniteElement(
-                metadata["element_family"],
-                element_tuple[mesh.geometry().dim() - 1],        # zero indexed
-                metadata["element_degree"]
-            )
+    #         element = dolfin.FiniteElement(
+    #             metadata["element_family"],
+    #             element_tuple[mesh.geometry().dim() - 1],        # zero indexed
+    #             metadata["element_degree"]
+    #         )
 
-            V_space = dolfin.FunctionSpace(mesh, element)
-        v_func = dolfin.Function(V_space)
+    #         V_space = dolfin.FunctionSpace(mesh, element)
+    #     v_func = dolfin.Function(V_space)
 
-        filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
-        with h5py.File(filename, "r") as hdf5_file:
-            sorted_field_names = sorted(filter(lambda x: x not in (name ,"mesh"), hdf5_file.keys()),
-                                        key=lambda x: int("".join(filter(str.isdigit, x))))
+    #     filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
+    #     with h5py.File(filename, "r") as hdf5_file:
+    #         sorted_field_names = sorted(filter(lambda x: x not in (name ,"mesh"), hdf5_file.keys()),
+    #                                     key=lambda x: int("".join(filter(str.isdigit, x))))
 
-        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
-            fieldfile.read(v_func, sorted_field_names[-1])
+    #     with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+    #         fieldfile.read(v_func, sorted_field_names[-1])
 
-        timestep = int("".join(filter(str.isdigit, sorted_field_names[-1])))
+    #     timestep = int("".join(filter(str.isdigit, sorted_field_names[-1])))
 
-        # timestep = max(0, metadata["start_timestep"])
-        # timestep += metadata["stride_timestep"]*(len(sorted_field_names) - 1)
-        _, time = load_times(self.casedir)
-        return v_func, timestep, time[timestep]
+    #     # timestep = max(0, metadata["start_timestep"])
+    #     # timestep += metadata["stride_timestep"]*(len(sorted_field_names) - 1)
+    #     _, time = load_times(self.casedir)
+    #     return v_func, timestep, time[timestep]

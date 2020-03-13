@@ -11,5 +11,6 @@ setup(
         "numpy",
         "pandas",
         "pyyaml",
+        "h5py",
     ]
 )
