@@ -12,5 +12,6 @@ setup(
         "pandas",
         "pyyaml",
         "h5py",
+        "scipy",
     ]
 )
