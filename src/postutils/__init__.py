@@ -1,7 +1,9 @@
 from .utils import (
     store_metadata,
     load_metadata,
-    import_fenicstools
+    import_fenicstools,
+    get_mesh,
+    get_indicator_function,
 )
 
 from .configs import (

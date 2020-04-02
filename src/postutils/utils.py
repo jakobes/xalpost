@@ -1,18 +1,16 @@
 """Utilities for storing metadata."""
 
 from pathlib import Path
+import typing as tp
+import dolfin as df
 
-from typing import (
-    Any,
-    Dict,
-)
 
 import yaml
 
 
 def store_metadata(
         filepath: Path,
-        meta_dict: Dict[Any, Any],
+        meta_dict: tp.Dict[tp.Any, tp.Any],
         default_flow_style: bool = False
 ) -> None:
     """Save spec as `filepath`.
@@ -28,7 +26,7 @@ def store_metadata(
         yaml.dump(meta_dict, out_handle, default_flow_style=default_flow_style)
 
 
-def load_metadata(filepath: Path) -> Dict[str, Any]:
+def load_metadata(filepath: Path) -> tp.Dict[str, tp.Any]:
     """Read the metadata associated with a field name.
 
     Arguments:
@@ -38,7 +36,33 @@ def load_metadata(filepath: Path) -> Dict[str, Any]:
         return yaml.load(in_handle)
 
 
-def import_fenicstools() -> Any:
+def import_fenicstools() -> tp.Any:
     """Delayed import of fenicstools."""
     import fenicstools
     return fenicstools
+
+
+def get_mesh(directory: Path, name: str) -> tp.Tuple[df.Mesh, df.MeshFunction, df.MeshFunction]:
+    mesh = df.Mesh()
+    mesh_name = str(directory / f"{name}.xdmf")
+    with df.XDMFFile(mesh_name) as infile:
+        infile.read(mesh)
+
+    cell_function_name = str(directory / f"{name}_cf.xdmf")
+    mvc = df.MeshValueCollection("size_t", mesh, mesh.geometry().dim())
+    with df.XDMFFile(cell_function_name) as infile:
+        infile.read(mvc)
+        # infile.read(mvc, "tetra")
+    cell_function = df.MeshFunction("size_t", mesh, mvc)
+    return mesh, cell_function
+
+
+def get_indicator_function(function_path: Path, mesh: df.Mesh, name: str = "indicator") -> df.Function:
+    # Has to be the same as in the bidomain solver
+    function_space = df.FunctionSpace(mesh, "CG", 1)
+    function = df.Function(function_space)
+    with df.XDMFFile(str(function_path)) as infile:
+        infile.read_checkpoint(function, name, 0)
+
+    return function
+

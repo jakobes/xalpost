@@ -8,6 +8,8 @@ from typing import (
     Any,
 )
 
+import dolfin as df
+
 
 def simulation_directory(
     *,
@@ -33,7 +35,10 @@ def simulation_directory(
     _home = Path(home)
     outdirectory = _home / directory_name
     outdirectory.resolve()      # is this necessary? Probably, if home is provided by user
-    outdirectory.mkdir(parents=True, exist_ok=True)
+
+    if df.MPI.rank(df.MPI.comm_world) == 0:
+        outdirectory.mkdir(parents=True, exist_ok=True)
+    df.MPI.barrier(df.MPI.comm_world)
 
     # Create hash of parameters. Truncate to length 8 for readability
     encoder = hashlib.sha1()
@@ -42,7 +47,9 @@ def simulation_directory(
 
     # Abort if directory exists
     simulation_directory = outdirectory / hash      # outdirectory is already absolute
-    simulation_directory.mkdir(exist_ok=overwrite_data)
+    if df.MPI.rank(df.MPI.comm_world) == 0:
+        simulation_directory.mkdir(exist_ok=overwrite_data)
+    df.MPI.barrier(df.MPI.comm_world)
 
     # Create a list mapping hashes to parameters
     with (outdirectory / "simulation_list.txt").open("a") as outfile_handle:

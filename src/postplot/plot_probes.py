@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Container
 
 import numpy as np
+import dolfin as df
 
 import matplotlib as mpl
-mpl.use("Agg")
+# mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 from postspec import PlotSpec
@@ -35,6 +36,9 @@ def plot_point_field(
     ax.legend(labels, loc=spec.label_loc)
 
     outdir = Path(spec.outdir)
-    outdir.mkdir(exist_ok=True)
+
+    if df.MPI.rank(df.MPI.comm_world) == 0:
+        outdir.mkdir(exist_ok=True)
+    df.MPI.barrier(df.MPI.comm_world)
     fig.savefig(str(outdir / f"{spec.name}.{spec.save_format}"))
     plt.close(fig)

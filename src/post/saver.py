@@ -5,6 +5,7 @@ import logging
 import shutil
 
 import numpy as np
+import dolfin as df
 
 from postspec import (
     SaverSpec,
@@ -44,10 +45,9 @@ class Saver(PostProcessorBaseClass):
         # if self._casedir.exists() and self._spec.overwrite_casedir:
         #     shutil.rmtree(self._casedir)
 
-        try:
+        if df.MPI.rank(df.MPI.comm_world) == 0:
             self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)
-        except:
-            raise FileExistsError("Casedir exists. set `overwrite_casedir` to True to overwrite.")
+        df.MPI.barrier(df.MPI.comm_world)
 
     def store_mesh(
             self,
@@ -56,13 +56,37 @@ class Saver(PostProcessorBaseClass):
             facet_domains: dolfin.MeshFunction = None
     ) -> None:
         """Save the mesh, and cellfunction and facet function if provided."""
-        filename = self.casedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(mesh.mpi_comm(), str(filename), "w") as meshfile:
-            meshfile.write(mesh, "/Mesh")
+        filename = self.casedir / Path("mesh.xdmf")
+        # with dolfin.XDMFFile(df.MPI.comm_world, str(filename)) as meshfile:
+
+        # if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
+        # meshfile = dolfin.XDMFFile(mesh.mpi_comm(), str(filename))
+        # dolfin.MPI.barrier(dolfin.MPI.comm_world)
+
+        # meshfile.write(mesh)
+        # if cell_domains is not None:
+        #     meshfile.write(cell_domains)
+        #     dolfin.MPI.barrier(dolfin.MPI.comm_world)
+        # if facet_domains is not None:
+        #     meshfile.write(facet_domains)
+        #     dolfin.MPI.barrier(dolfin.MPI.comm_world)
+        # dolfin.MPI.barrier(dolfin.MPI.comm_world)
+
+        with dolfin.XDMFFile(mesh.mpi_comm(), str(filename)) as meshfile:
+            meshfile.write(mesh)
             if cell_domains is not None:
-                meshfile.write(cell_domains, "/CellDomains")
+                meshfile.write(cell_domains)
             if facet_domains is not None:
-                meshfile.write(facet_domains, "/FacetDomains")
+                meshfile.write(facet_domains)
+
+        # filename = self.casedir/Path("mesh.hdf5")
+        # # with dolfin.HDF5File(mesh.mpi_comm(), str(filename), "w") as meshfile:
+        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w") as meshfile:
+        #     meshfile.write(mesh, "/Mesh")
+        #     if cell_domains is not None:
+        #         meshfile.write(cell_domains, "/CellDomains")
+        #     if facet_domains is not None:
+                # meshfile.write(facet_domains, "/FacetDomains")
 
     def add_field(self, field: Field) -> None:
         """Add a field to the postprocessor."""

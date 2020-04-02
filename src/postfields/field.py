@@ -15,6 +15,8 @@ from typing import (
 )
 from .field_base import FieldBaseClass
 
+import dolfin as df
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -83,7 +85,9 @@ class Field(FieldBaseClass):
 
         if self._first_compute:
             self._first_compute = False
-            self._path.mkdir(parents=False, exist_ok=True)
+            if df.MPI.rank(df.MPI.comm_world) == 0:
+                self._path.mkdir(parents=False, exist_ok=True)
+            df.MPI.barrier(df.MPI.comm_world)
 
             # Update spec with element specifications
             spec_dict = self.spec._asdict()

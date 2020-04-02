@@ -8,11 +8,11 @@ Thanks to Øyvind Evju and cbcpost (bitbucket.org/simula_cbc/cbcpost).
 from pathlib import Path
 from time import perf_counter
 
-
 import logging
 import dolfin
 
 import numpy as np
+import dolfin as df
 
 from typing import List
 
@@ -87,7 +87,10 @@ class PointField(FieldBaseClass):
         if self.first_compute:              # Setup everything
             self.first_compute = False      # Do not do this again
             self.before_first_compute(data)
-            self._path.mkdir(parents=False, exist_ok=True)
+
+            if df.MPI.rank(df.MPI.comm_world) == 0:
+                self._path.mkdir(parents=False, exist_ok=True)
+            df.MPI.barrier(df.MPI.comm_world)
 
             # Update spec with element specifications
             spec_dict = self.spec._asdict()
