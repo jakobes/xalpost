@@ -47,7 +47,7 @@ class PointField(FieldBaseClass):
             self._points.shape = (1, self._points.shape[0])
         self._ft = import_fenicstools()     # Delayed import of fenicstools
         self._probes = None                 # Defined in `compute`
-        self._results: List[np.ndarray] = []                  # Append probe evaluations
+        # self._results: List[np.ndarray] = []                  # Append probe evaluations
 
     def before_first_compute(self, data: dolfin.Function) -> None:
         """Create probes."""
@@ -81,16 +81,16 @@ class PointField(FieldBaseClass):
 
     def update(self, timestep: int, time: float, data: dolfin.Function) -> None:
         """Update the data."""
+
+        comm = df.MPI.comm_world
+        rank = df.MPI.rank(comm)
+
         if not self.save_this_timestep(timestep, time):
             return
 
         if self.first_compute:              # Setup everything
             self.first_compute = False      # Do not do this again
             self.before_first_compute(data)
-
-            if df.MPI.rank(df.MPI.comm_world) == 0:
-                self._path.mkdir(parents=False, exist_ok=True)
-            df.MPI.barrier(df.MPI.comm_world)
 
             # Update spec with element specifications
             spec_dict = self.spec._asdict()
@@ -102,14 +102,16 @@ class PointField(FieldBaseClass):
             plist = [tuple(map(float, p)) for p in self._points]      # TODO: Untested
             spec_dict["point"] = plist
 
-            store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
+            if rank == 0:
+                self._path.mkdir(parents=False, exist_ok=True)
+                store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
 
-        with open(self.path/Path("probes_{name}.txt".format(name=self.name)), "a") as of_handle:
-            _data = self.compute(data)
-            if self._points.shape[0] == 1:
-                _data = (_data,)
-            _data_format_str = ", ".join(("{}",)*(len(_data) + 1))
-            of_handle.write(_data_format_str.format(float(time), *_data))
-            of_handle.write("\n")
+        _data = self.compute(data)
 
-        self._results.append(self.compute(data))
+        if rank == 0:
+            with open(self.path/Path("probes_{name}.txt".format(name=self.name)), "a") as of_handle:
+                if self._points.shape[0] == 1:
+                    _data = (_data,)
+                _data_format_str = ", ".join(("{}",)*(len(_data) + 1))
+                of_handle.write(_data_format_str.format(float(time), *_data))
+                of_handle.write("\n")
