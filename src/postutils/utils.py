@@ -7,6 +7,13 @@ import dolfin as df
 
 import yaml
 
+import logging
+import os
+
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+logger = logging.getLogger(__name__)
+
 
 def store_metadata(
         filepath: Path,
@@ -48,12 +55,16 @@ def get_mesh(directory: Path, name: str) -> tp.Tuple[df.Mesh, df.MeshFunction, d
     with df.XDMFFile(mesh_name) as infile:
         infile.read(mesh)
 
-    cell_function_name = str(directory / f"{name}_cf.xdmf")
-    mvc = df.MeshValueCollection("size_t", mesh, mesh.geometry().dim())
-    with df.XDMFFile(cell_function_name) as infile:
-        infile.read(mvc)
-        # infile.read(mvc, "tetra")
-    cell_function = df.MeshFunction("size_t", mesh, mvc)
+    cell_function_name = directory / f"{name}_cf.xdmf"
+    if not cell_function_name.exists():
+        cell_function = None
+        logging.info(f"Could not read cell function, file '{cell_function_name} does not exist")
+    else:
+        mvc = df.MeshValueCollection("size_t", mesh, mesh.geometry().dim())
+        with df.XDMFFile(str(cell_function_name)) as infile:
+            infile.read(mvc)
+            # infile.read(mvc, "tetra")
+        cell_function = df.MeshFunction("size_t", mesh, mvc)
     return mesh, cell_function
 
 
