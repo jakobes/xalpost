@@ -150,7 +150,6 @@ class Field(FieldBaseClass):
             fieldfile = self._datafile_cache[key]
         else:
             filename = self.path / "{name}.xdmf".format(name=self.name)
-            # fieldfile = dolfin.XDMFFile(dolfin.mpi_comm_world(), str(filename))
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             fieldfile.parameters["functions_share_mesh"] = share_mesh
@@ -175,11 +174,10 @@ class Field(FieldBaseClass):
             filename = self.path / "{name}_chk.xdmf".format(name=self.name)
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
-            # fieldfile.parameters["functions_share_mesh"] = share_mesh
+            fieldfile.parameters["functions_share_mesh"] = share_mesh
             # fieldfile.parameters["flush_output"] = flush_output
 
-        # fieldfile.write(data, float(time))
-        fieldfile.write_checkpoint(data, self.name, time_step=float(time), append=False)
+        fieldfile.write_checkpoint(data, self.name, time_step=float(time), append=True)
         self._datafile_cache[key] = fieldfile
 
     def load(self):
