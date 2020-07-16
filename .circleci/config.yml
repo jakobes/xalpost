@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 dependencies:
   pre:
@@ -35,7 +35,10 @@ jobs:
       - run:
           name: Install xalpost
           command: |
-            sudo python3 -m pip install .
+            python3 -m pip install . --user
+            python3 -m pip install git+git://github.com/mikaem/fenicstools --user
+            python3 -m pip install cppimport --user
+            python3 -c "import fenicstools; fenicstools.Probe"
 
       - run:
           name: Import xalbrain first time (JIT)
