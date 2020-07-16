@@ -95,7 +95,7 @@ class Field(FieldBaseClass):
             spec_dict["element_family"] = str(element.family())  # e.g. Lagrange
             spec_dict["element_degree"] = element.degree()
 
-            store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
+            store_metadata(self.path / "metadata_{name}.yaml".format(name=self.name), spec_dict)
 
         if "hdf5" in self.spec.save_as:
             self._store_field_hdf5(timestep, time, data)
@@ -174,10 +174,10 @@ class Field(FieldBaseClass):
             filename = self.path / "{name}_chk.xdmf".format(name=self.name)
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
-            fieldfile.parameters["functions_share_mesh"] = share_mesh
+            # fieldfile.parameters["functions_share_mesh"] = share_mesh
             # fieldfile.parameters["flush_output"] = flush_output
 
-        fieldfile.write_checkpoint(data, self.name, time_step=float(time), append=True)
+        fieldfile.write_checkpoint(data, self.name, int(timestep), append=True)
         self._datafile_cache[key] = fieldfile
 
     def load(self):

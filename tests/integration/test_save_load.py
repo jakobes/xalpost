@@ -36,11 +36,9 @@ def test_save_load():
         casedir = Path(tmpdirname) / "test_pp_casedir"
 
         # Setup saver
-        field_spec = FieldSpec(stride_timestep=10)
+        field_spec = FieldSpec(stride_timestep=1)
         saver_spec = SaverSpec(casedir=str(casedir))
         saver = Saver(saver_spec)
-
-        assert casedir.exists(), "Aha!"
 
         saver.store_mesh(
             solver.mesh,
@@ -51,9 +49,9 @@ def test_save_load():
 
         # Solver loop
         time_func_dict = {}
-        for i, (t, u) in enumerate(solver.solve(0, 100, 1.0)):
-            saver.update(t, i, {"u": u})
-            time_func_dict[t] = u.copy(True)
+        for timestep, (t, u) in enumerate(solver.solve(0, 100, 1.0)):
+            saver.update(t, timestep, {"u": u})
+            time_func_dict[timestep] = u.copy(True)
         saver.close()
 
         # Define loader
@@ -62,9 +60,6 @@ def test_save_load():
         loaded_mesh = loader.load_mesh()
         loaded_cell_function = loader.load_mesh_function("cell_function")
         loaded_facet_function = loader.load_mesh_function("facet_function")
-        print(set(loaded_cell_function.array()))
-        print(set(loaded_facet_function.array()))
-        assert False
 
         # Compare mesh and meshfunctions
         assert np.sum(solver.mesh.coordinates() - loaded_mesh.coordinates()) == 0
@@ -73,8 +68,8 @@ def test_save_load():
         assert np.sum(solver.facet_function.array() - loaded_facet_function.array()) == 0
 
         # Compare functions and time
-        for loaded_u, loaded_t in loader.load_field("u", return_time=True):
-            diff = np.sum(time_func_dict[loaded_t].vector().array() - loaded_u.vector().array())
+        for timestep, (loaded_t, loaded_u) in enumerate(loader.load_checkpoint("u")):
+            diff = np.sum(time_func_dict[timestep].vector().get_local() - loaded_u.vector().get_local())
             assert diff == 0, diff
 
 

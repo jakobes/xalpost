@@ -24,8 +24,7 @@ class PostProcessorSpec(NamedTuple):
 
 class FieldSpec(NamedTuple):
     save: bool = True
-    save_as: Tuple[str] = ("hdf5", "xdmf")
-    save: bool = True
+    save_as: Tuple[str] = ("checkpoint",)
     plot: bool = False
     start_timestep: int = -1    # Save after `start_timestep` timestep
     stride_timestep: int = 1    # Save every `stride_timestep`

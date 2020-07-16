@@ -53,8 +53,7 @@ class Saver(PostProcessorBaseClass):
             facet_domains: dolfin.MeshFunction = None
     ) -> None:
         """Save the mesh, and cellfunction and facet function if provided."""
-        # filename = self.casedir / Path("mesh.xdmf")
-        with dolfin.XDMFFile(mesh.mpi_comm(), str(self.casedir / "mesh.xdmf")) as meshfile:
+        with dolfin.XDMFFile(mesh.mpi_comm(), str(self._casedir / "mesh.xdmf")) as meshfile:
             meshfile.write(mesh)
 
             # if cell_domains is not None:
@@ -63,12 +62,12 @@ class Saver(PostProcessorBaseClass):
             #     meshfile.write(facet_domains, "facet_domains")
 
         if cell_domains is not None:
-            with df.XDMFFile(mesh.mpi_comm(), str(self.casedir / "cell_function.xdmf")) as cf_file:
+            with df.XDMFFile(mesh.mpi_comm(), str(self._casedir / "cell_function.xdmf")) as cf_file:
                 cf_file.write(mesh)
                 cf_file.write(cell_domains)
 
         if facet_domains is not None:
-            with df.XDMFFile(mesh.mpi_comm(), str(self.casedir / "facet_function.xdmf")) as ff_file:
+            with df.XDMFFile(mesh.mpi_comm(), str(self._casedir / "facet_function.xdmf")) as ff_file:
                 ff_file.write(mesh)
                 ff_file.write(facet_domains)
 
@@ -91,7 +90,7 @@ class Saver(PostProcessorBaseClass):
         for name, data in data_dict.items():
             self._fields[name].update(timestep, time, data)
 
-        filename = self.casedir/Path("times.txt")
+        filename = self._casedir / Path("times.txt")
         with open(filename, "a") as of_handle:
             of_handle.write("{} {}\n".format(timestep, float(time)))
 
@@ -105,7 +104,7 @@ class Saver(PostProcessorBaseClass):
         for name, data in data_dict.items():
             self._fields[name].update(timestep, time, data)
 
-        with (self.casedir / Path("times.txt")).open("a") as of_handle:
+        with (self._casedir / Path("times.txt")).open("a") as of_handle:
             of_handle.write("{} {}\n".format(timestep, float(time)))
 
     def close(self) -> None:
