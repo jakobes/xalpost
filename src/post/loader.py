@@ -41,40 +41,51 @@ class Loader(PostProcessorBaseClass):
     def __init__(self, spec: LoaderSpec) -> None:
         """Store saver specifications."""
         super().__init__(spec)
+        self.mesh = None
+
+    # TODO: @property?
+    def set_mesh(self, mesh: df.Mesh) -> None:
+        self.mesh = mesh
 
     def load_mesh(self) -> dolfin.mesh:
-        """Load and return the mesh.
+        """Load and return the mesh stored as xdmf."""
+        if self.mesh is None:
+            self.mesh = df.Mesh()
+            mesh_name = self.casedir / Path("mesh.xdmf")
+            with df.XDMFFile(str(mesh_name)) as infile:
+                infile.read(self.mesh)
+        return self.mesh
 
-        Will also return cell and facet functions if present.
-        """
-        filename = self.casedir/Path("mesh.hdf5")
-        mesh = dolfin.Mesh()
-        with dolfin.HDF5File(mesh.mpi_comm(), str(filename), "r") as meshfile:
-            meshfile.read(mesh, "/Mesh", False)
-        return mesh
-
-    def load_mesh_function(self, mesh: dolfin.Mesh, name: str) -> dolfin.MeshFunction:
+    def load_mesh_function(self, name: str) -> dolfin.MeshFunction:
         """Lead and return a mesh function.
 
-        There are two options, 'CellDomains' or 'FacetDomains'. Both are stored in
-        'mesh.hdf5'.
+        There are two options, 'cell_function' or 'facet_function'.
 
         Arguments:
-            mesh: The mesh the function is defin on. Use `self.load_mesh`.
-            name: Either 'CellDomains' or 'FacetDomains'.
+            name: Either 'cell_function' or 'facet_function'.
         """
-        msg = "Meshfunctions are stored as 'CellDomains' or 'FacetDomains'."
-        assert name in ("CellDomains", "FacetDomains"), msg
+        # TODO: I could use Enum rather than hard-coding names
+        msg = "Meshfunctions are stored as 'cell_function' or 'facet_function'."
+        if not name in ("cell_function", "facet_function"):
+            raise ValueError(msg)
 
-        filename = self.casedir/Path("mesh.hdf5")
-        with dolfin.HDF5File(dolfin.mpi_comm_world(), str(filename), "r") as meshfile:
-            mesh_function = dolfin.MeshFunction("size_t", mesh)
-            meshfile.read(mesh_function, "/{name}".format(name=name))
-        return mesh_function
+        self.load_mesh()        # Method tests if mesh is already loaded
+
+        dimension = self.mesh.geometry().dim()      # if cell function
+        if name == "facet_function":
+            dimension -= 1      # dimension is one less
+
+        # mvc = df.MeshValueCollection("size_t", self.mesh, dimension)
+        cell_function = df.MeshFunction("size_t", self.mesh, dimension)
+        with df.XDMFFile(str(self.casedir / f"{name}.xdmf")) as infile:
+            infile.read(cell_function)
+            # infile.read(mvc)
+        # cell_function = df.MeshFunction("size_t", self.mesh, mvc)
+        return cell_function
 
     def load_metadata(self, name) -> Dict[str, str]:
         """Read the metadata associated with a field name."""
-        return load_metadata(self.casedir/Path("{name}/metadata_{name}.yaml".format(name=name)))
+        return load_metadata(self.casedir / Path("{name}/metadata_{name}.yaml".format(name=name)))
 
     def load_field(
             self,
@@ -88,13 +99,14 @@ class Loader(PostProcessorBaseClass):
 
         Optionally, return the corresponding time.
         """
-        metadata = self.load_metadata(name)
+        # metadata = self.load_metadata(name)
 
         _timestep_iterable = timestep_iterable
         timestep_iterable, time_iterable = self.load_time()
         if _timestep_iterable is None:
             _timestep_iterable = timestep_iterable
-        mesh = self.load_mesh()
+        if self.mesh is None:
+            self.mesh = self.load_mesh()
 
         element_tuple = (
             dolfin.interval,
@@ -104,27 +116,27 @@ class Loader(PostProcessorBaseClass):
 
         if vector:
             element = dolfin.VectorElement(
-                metadata["element_family"],
-                element_tuple[mesh.geometry().dim() - 1],
-                metadata["element_degree"]
+                "CG",
+                element_tuple[self.mesh.geometry().dim() - 1],
+                1
             )
         else:
             element = dolfin.FiniteElement(
-                metadata["element_family"],
-                element_tuple[mesh.geometry().dim() - 1],        # zero indexed
-                metadata["element_degree"]
+                "CG",
+                element_tuple[self.mesh.geometry().dim() - 1],        # zero indexed
+                1
             )
 
-        V_space = dolfin.FunctionSpace(mesh, element)
+        V_space = dolfin.FunctionSpace(self.mesh, element)
         v_func = dolfin.Function(V_space)
 
         filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
         with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
             for i in _timestep_iterable:
-                if i < int(metadata["start_timestep"]):
-                    continue
-                if i % int(metadata["stride_timestep"]) != 0:
-                    continue
+                # if i < int(metadata["start_timestep"]):
+                #     continue
+                # if i % int(metadata["stride_timestep"]) != 0:
+                #     continue
                 fieldfile.read(v_func, "{name}{i}".format(name=name, i=i))
                 yield time_iterable[i], v_func
 
@@ -139,7 +151,9 @@ class Loader(PostProcessorBaseClass):
         timestep_iterable, time_iterable = self.load_time()
         if _timestep_iterable is None:
             _timestep_iterable = timestep_iterable
-        mesh = self.load_mesh()
+
+        if self.mesh is None:
+            self.mesh = self.load_mesh()
 
         element_tuple = (
             dolfin.interval,
@@ -149,22 +163,22 @@ class Loader(PostProcessorBaseClass):
 
         element = dolfin.FiniteElement(
             metadata["element_family"],
-            element_tuple[mesh.geometry().dim() - 1],        # zero indexed
+            element_tuple[self.mesh.geometry().dim() - 1],        # zero indexed
             metadata["element_degree"]
         )
 
-        V_space = dolfin.FunctionSpace(mesh, element)
+        V_space = dolfin.FunctionSpace(self.mesh, element)
         v_func = dolfin.Function(V_space)
 
-        filename = self.casedir/Path("{name}/{name}.hdf5".format(name=name))
-        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+        filename = self.casedir/Path("{name}/{name}_chk.xdmf".format(name=name))
+        with dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename)) as fieldfile:
             for i, _time in enumerate(_timestep_iterable):
                 if _time < int(metadata["start_timestep"]):
                     continue
                 if _time % int(metadata["stride_timestep"]) != 0:
                     continue
-                fieldfile.read_checkpoint(v_func, self.name, counter=i)
-                yield time_iterable[i], v_func.vector()
+                fieldfile.read_checkpoint(v_func, name, counter=i)
+                yield time_iterable[i], v_func
 
     @property
     def casedir(self) -> Path:

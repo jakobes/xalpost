@@ -42,9 +42,6 @@ class Saver(PostProcessorBaseClass):
         self._time_list = []            # Keep track of time points
         self._first_compute = True      # Perform special action after before first save
 
-        # if self._casedir.exists() and self._spec.overwrite_casedir:
-        #     shutil.rmtree(self._casedir)
-
         if df.MPI.rank(df.MPI.comm_world) == 0:
             self._casedir.mkdir(parents=True, exist_ok=self._spec.overwrite_casedir)
         df.MPI.barrier(df.MPI.comm_world)
@@ -56,37 +53,24 @@ class Saver(PostProcessorBaseClass):
             facet_domains: dolfin.MeshFunction = None
     ) -> None:
         """Save the mesh, and cellfunction and facet function if provided."""
-        filename = self.casedir / Path("mesh.xdmf")
-        # with dolfin.XDMFFile(df.MPI.comm_world, str(filename)) as meshfile:
-
-        # if dolfin.MPI.rank(dolfin.MPI.comm_world) == 0:
-        # meshfile = dolfin.XDMFFile(mesh.mpi_comm(), str(filename))
-        # dolfin.MPI.barrier(dolfin.MPI.comm_world)
-
-        # meshfile.write(mesh)
-        # if cell_domains is not None:
-        #     meshfile.write(cell_domains)
-        #     dolfin.MPI.barrier(dolfin.MPI.comm_world)
-        # if facet_domains is not None:
-        #     meshfile.write(facet_domains)
-        #     dolfin.MPI.barrier(dolfin.MPI.comm_world)
-        # dolfin.MPI.barrier(dolfin.MPI.comm_world)
-
-        with dolfin.XDMFFile(mesh.mpi_comm(), str(filename)) as meshfile:
+        # filename = self.casedir / Path("mesh.xdmf")
+        with dolfin.XDMFFile(mesh.mpi_comm(), str(self.casedir / "mesh.xdmf")) as meshfile:
             meshfile.write(mesh)
-            if cell_domains is not None:
-                meshfile.write(cell_domains)
-            if facet_domains is not None:
-                meshfile.write(facet_domains)
 
-        # filename = self.casedir/Path("mesh.hdf5")
-        # # with dolfin.HDF5File(mesh.mpi_comm(), str(filename), "w") as meshfile:
-        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w") as meshfile:
-        #     meshfile.write(mesh, "/Mesh")
-        #     if cell_domains is not None:
-        #         meshfile.write(cell_domains, "/CellDomains")
-        #     if facet_domains is not None:
-                # meshfile.write(facet_domains, "/FacetDomains")
+            # if cell_domains is not None:
+            #     meshfile.write(cell_domains, "cell_domains")
+            # if facet_domains is not None:
+            #     meshfile.write(facet_domains, "facet_domains")
+
+        if cell_domains is not None:
+            with df.XDMFFile(mesh.mpi_comm(), str(self.casedir / "cell_function.xdmf")) as cf_file:
+                cf_file.write(mesh)
+                cf_file.write(cell_domains)
+
+        if facet_domains is not None:
+            with df.XDMFFile(mesh.mpi_comm(), str(self.casedir / "facet_function.xdmf")) as ff_file:
+                ff_file.write(mesh)
+                ff_file.write(facet_domains)
 
     def add_field(self, field: Field) -> None:
         """Add a field to the postprocessor."""

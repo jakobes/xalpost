@@ -104,12 +104,12 @@ class PointField(FieldBaseClass):
 
             if rank == 0:
                 self._path.mkdir(parents=False, exist_ok=True)
-                store_metadata(self.path/"metadata_{name}.yaml".format(name=self.name), spec_dict)
+                store_metadata(self.path / "metadata_{name}.yaml".format(name=self.name), spec_dict)
 
         _data = self.compute(data)
 
         if rank == 0:
-            with open(self.path/Path("probes_{name}.txt".format(name=self.name)), "a") as of_handle:
+            with open(self.path / "probes_{name}.txt".format(name=self.name), "a") as of_handle:
                 if self._points.shape[0] == 1:
                     _data = (_data,)
                 _data_format_str = ", ".join(("{}",)*(len(_data) + 1))

@@ -15,7 +15,7 @@ from collections import namedtuple
 TimestepTuple = namedtuple("TimestepTuple", ["timestep", "time"])
 
 
-def read_point_metadata(path, name) -> Any:
+def read_point_metadata(*, path: Path, name: str) -> Any:
     try:
         with open(path / Path("{}/metadata_{}.yaml".format(name, name)), "r") as if_handle:
             return yaml.load(if_handle)
@@ -24,7 +24,7 @@ def read_point_metadata(path, name) -> Any:
         print("Could not find metadata")
 
 
-def read_point_values(path) -> np.ndarray:
+def read_point_values(*, path: Path) -> np.ndarray:
     """Read the data from a single probe.
 
     TODO: Integrate this into the loader.
@@ -36,7 +36,7 @@ def read_point_values(path) -> np.ndarray:
     return data
 
 
-def load_times(path: Union[str, Path]) -> TimestepTuple:
+def load_times(path: Path) -> TimestepTuple:
     """Read the timesteps and times and return them as numpy arrays."""
     _path = Path(path)      # To be sure
     try:

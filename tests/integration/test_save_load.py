@@ -2,7 +2,7 @@
 import tempfile
 
 import numpy as np
-import dolfin as do
+import dolfin as df
 
 from pathlib import Path
 
@@ -26,18 +26,22 @@ from postspec import (
 
 def test_save_load():
     """Solve a problem, save the data, load it back and compare."""
-    do.set_log_level(100)       # supress dolfin logger
+    df.set_log_level(100)       # supress dolfin logger
 
     # Setup solver
     solver = SubdomainSolver(N=32)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        casedirname = Path(tmpdirname)/"test_pp_casedir"
+        tmpdirname = "foo"
+        casedir = Path(tmpdirname) / "test_pp_casedir"
 
         # Setup saver
         field_spec = FieldSpec(stride_timestep=10)
-        saver_spec = SaverSpec(casedir=str(casedirname))
+        saver_spec = SaverSpec(casedir=str(casedir))
         saver = Saver(saver_spec)
+
+        assert casedir.exists(), "Aha!"
+
         saver.store_mesh(
             solver.mesh,
             cell_domains=solver.cell_function,
@@ -53,11 +57,14 @@ def test_save_load():
         saver.close()
 
         # Define loader
-        loader_spec = LoaderSpec(casedir=str(casedirname))
+        loader_spec = LoaderSpec(casedir=str(casedir))
         loader = Loader(loader_spec)
         loaded_mesh = loader.load_mesh()
-        loaded_cell_function = loader.load_mesh_function(loaded_mesh, "CellDomains")
-        loaded_facet_function = loader.load_mesh_function(loaded_mesh, "FacetDomains")
+        loaded_cell_function = loader.load_mesh_function("cell_function")
+        loaded_facet_function = loader.load_mesh_function("facet_function")
+        print(set(loaded_cell_function.array()))
+        print(set(loaded_facet_function.array()))
+        assert False
 
         # Compare mesh and meshfunctions
         assert np.sum(solver.mesh.coordinates() - loaded_mesh.coordinates()) == 0
