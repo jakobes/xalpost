@@ -4,6 +4,7 @@ from .utils import (
     import_fenicstools,
     get_mesh,
     get_indicator_function,
+    get_current_time_mpi,
 )
 
 from .configs import (

@@ -180,7 +180,6 @@ class Loader(PostProcessorBaseClass):
                     continue
                 if _time % int(metadata["stride_timestep"]) != 0:
                     continue
-                print(name, i)
                 fieldfile.read_checkpoint(v_func, name, counter=i)
                 yield time_iterable[i], v_func
 

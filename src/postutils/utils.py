@@ -4,7 +4,7 @@ from pathlib import Path
 import typing as tp
 import dolfin as df
 
-
+import datetime
 import yaml
 
 import logging
@@ -82,3 +82,11 @@ def get_indicator_function(function_path: Path, mesh: df.Mesh, name: str = "indi
 
     return function
 
+
+def get_current_time_mpi() -> datetime.datetime:
+    if df.MPI.rank(df.MPI.comm_world) == 0:
+        current_time = datetime.datetime.now()
+    else:
+        current_time = None
+    current_time = df.MPI.comm_world.bcast(current_time, root=0)
+    return current_time
