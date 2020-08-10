@@ -35,10 +35,10 @@ jobs:
       - run:
           name: Install xalpost
           command: |
-            python3 -m pip install . --user
             python3 -m pip install git+git://github.com/mikaem/fenicstools --user
             python3 -m pip install cppimport --user
             python3 -c "import fenicstools; fenicstools.Probe"
+            python3 -m pip install . --user
 
       - run:
           name: Import xalbrain first time (JIT)

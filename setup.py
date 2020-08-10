@@ -8,8 +8,8 @@ setup(
     packages = find_packages("src"),
     package_dir = {"": "src"},
     install_requires=[
-        "numpy",
-        "pandas",
+        "pandas>=1.0.3",
+        "numpy>=1.18.1",
         "pyyaml",
         "h5py",
         "scipy",
