@@ -90,3 +90,34 @@ def get_current_time_mpi() -> datetime.datetime:
         current_time = None
     current_time = df.MPI.comm_world.bcast(current_time, root=0)
     return current_time
+
+
+def save_function(
+    indicator_function: df.Function,
+    output_path: Path,
+    name: tp.Optional[str] = None
+) -> None:
+    """Save a dolfin function as xdmf checkpoint for reading and visualisation."""
+    if name is None:
+        name = "indicator"
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with df.XDMFFile(str(output_path)) as xdmf:
+        xdmf.write_checkpoint(indicator_function, name, 0)
+
+
+def read_function(
+    mesh: df.Mesh,
+    name: Path,
+    function_name: tp.Optional[str] = None,
+    function_space_type: str = "CG"
+) -> df.Function:
+    if function_name is None:
+        function_name = "indicator"
+    function_space = df.FunctionSpace(mesh, function_space_type, 1)    # FIXME: I believe it is CG and not DG
+    function = df.Function(function_space)
+
+    with df.XDMFFile(str(name)) as xdmf:
+        xdmf.read_checkpoint(function, function_name, 0)
+    return function
