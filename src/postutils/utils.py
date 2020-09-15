@@ -3,6 +3,7 @@
 from pathlib import Path
 import typing as tp
 import dolfin as df
+import numpy as np
 
 import datetime
 import yaml
@@ -129,3 +130,11 @@ def get_part_number(timestep: int, break_time_step: tp.Optional[int]) -> str:
 
     part_number = timestep // break_time_step
     return f"_part{part_number}"
+
+
+def check_bounds(points: np.ndarray, limit: float = 100) -> bool:
+    span = np.max(points, axis=0) - np.min(points, axis=0)
+    max_span = np.max(span)
+    if max_span > limit:
+        raise ValueError(f"Max span is {max_span}. Assuming this is in mm not cm")
+    return True

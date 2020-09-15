@@ -8,6 +8,7 @@ from .utils import (
     save_function,
     read_function,
     get_part_number,
+    check_bounds
 )
 
 from .configs import (

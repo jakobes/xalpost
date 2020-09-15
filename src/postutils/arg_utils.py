@@ -14,5 +14,7 @@ def store_arguments(*, args: tp.Any, out_path: tp.Optional[Path] = None):
     if out_path is None:
         out_path = Path(".")
 
-    with out_path.open("w") as out_file:
-        json.dump(args.__dict__, out_file, indent=2)
+    data = {key: str(value) for key, value in args.__dict__.items()}
+
+    with (out_path / "args.json").open("w") as out_file:
+        json.dump(data, out_file, indent=2)
