@@ -5,7 +5,10 @@ import dolfin
 
 from postspec import FieldSpec
 
-from postutils import store_metadata
+from postutils import (
+    store_metadata,
+    get_part_number,
+)
 
 from pathlib import Path
 
@@ -114,7 +117,8 @@ class Field(FieldBaseClass):
     ) -> None:
         """Save as hdf5."""
         _key = "hdf5"
-        filename = self.path/"{name}.hdf5".format(name=self.name)
+        part_annotation = get_part_number(timestep, self._spec.num_steps_in_part)
+        filename = self.path / f"{self.name}{part_annotation}.hdf5"
         if filename.exists():
             fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "a")
         else:
@@ -149,7 +153,8 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path / "{name}.xdmf".format(name=self.name)
+            part_annotation = get_part_number(timestep, self._spec.num_steps_in_part)
+            filename = self.path / f"{self.name}{part_annotation}.xdmf"
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             fieldfile.parameters["functions_share_mesh"] = share_mesh
@@ -171,7 +176,8 @@ class Field(FieldBaseClass):
         if key in self._datafile_cache:
             fieldfile = self._datafile_cache[key]
         else:
-            filename = self.path / "{name}_chk.xdmf".format(name=self.name)
+            part_annotation = get_part_number(timestep, self._spec.num_steps_in_part)
+            filename = self.path / f"{self.name}_chk{part_annotation}.xdmf"
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             # fieldfile.parameters["functions_share_mesh"] = share_mesh

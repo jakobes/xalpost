@@ -121,3 +121,11 @@ def read_function(
     with df.XDMFFile(str(name)) as xdmf:
         xdmf.read_checkpoint(function, function_name, 0)
     return function
+
+
+def get_part_number(timestep: int, break_time_step: tp.Optional[int]) -> str:
+    if break_time_step is None:
+        return ""
+
+    part_number = timestep // break_time_step
+    return f"_part{part_number}"

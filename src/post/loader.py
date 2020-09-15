@@ -143,9 +143,9 @@ class Loader(PostProcessorBaseClass):
                 yield time_iterable[i], v_func
 
     def load_checkpoint(
-            self,
-            name: str,
-            timestep_iterable: Iterable[int] = None,
+        self,
+        name: str,
+        timestep_iterable: Iterable[int] = None,
     ) -> Iterator[Tuple[int, float, dolfin.Function]]:
         """yield tuple(float, function)."""
         metadata = self.load_metadata(name)
@@ -173,15 +173,29 @@ class Loader(PostProcessorBaseClass):
         V_space = dolfin.FunctionSpace(self.mesh, element)
         v_func = dolfin.Function(V_space)
 
-        filename = self.casedir/Path("{name}/{name}_chk.xdmf".format(name=name))
-        with dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename)) as fieldfile:
-            for i, _time in enumerate(_timestep_iterable):
-                if _time < int(metadata["start_timestep"]):
-                    continue
-                if _time % int(metadata["stride_timestep"]) != 0:
-                    continue
-                fieldfile.read_checkpoint(v_func, name, counter=i)
-                yield time_iterable[i], v_func
+        _filename = self.casedir / Path("{name}/{name}_chk.xdmf".format(name=name))
+        if _filename.exists():
+            filename_list = [_filename]
+        else:
+            filename_list = []
+            filename_directory = self.casedir / Path(f"{name}")
+            for _file in filter(lambda x: x.suffix == ".xdmf", filename_directory.iterdir()):
+                if "_chk_part" in _file.stem:
+                    LOGGER.info(f"loading file {_file}")
+                    filename_list.append(_file)
+
+        for filename in filename_list:
+            with dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename)) as fieldfile:
+                for i, _time in enumerate(_timestep_iterable):
+                    if _time < int(metadata["start_timestep"]):
+                        continue
+                    if _time % int(metadata["stride_timestep"]) != 0:
+                        continue
+                    try:
+                        fieldfile.read_checkpoint(v_func, name, counter=i)
+                    except RuntimeError as e:
+                        LOGGER.info(f"Could not read timestep: {e}")
+                    yield time_iterable[i], v_func
 
     @property
     def casedir(self) -> Path:
