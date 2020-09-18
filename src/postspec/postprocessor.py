@@ -34,7 +34,7 @@ class FieldSpec(NamedTuple):
     plot: bool = False
     start_timestep: int = -1    # Save after `start_timestep` timestep
     stride_timestep: int = 1    # Save every `stride_timestep`
-    element_family: tp.Optional[str] = None
-    element_degree: tp.Optional[int] = None
+    element_family: tp.Optional[str] = "CG"
+    element_degree: tp.Optional[int] = 1
     sub_field_index: tp.Optional[int] = None     # The index of the subfunction space
     num_steps_in_part: tp.Optional[int] = None

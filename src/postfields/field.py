@@ -75,7 +75,7 @@ class _HDF5Link:
         # self.cpp_link_module.link_dataset(dolfin.MPI.comm_world, hdf5filename, link_from, link_to, use_mpiio)
 
 
-# hdf5_link = _HDF5Link()
+hdf5_link = _HDF5Link()
 
 
 class Field(FieldBaseClass):
@@ -134,9 +134,9 @@ class Field(FieldBaseClass):
         fieldfile.write(data.vector(), self.name + str(timestep) + "/vector")
 
         # Link information about function space from hash-dataset
-        # hdf5_link(str(filename), self.name + "/x_cell_dofs", self.name + str(timestep) + "/x_cell_dofs")
-        # hdf5_link(str(filename), self.name + "/cell_dofs", self.name + str(timestep) + "/cell_dofs")
-        # hdf5_link(str(filename), self.name + "/cells", self.name + str(timestep) + "/cells")
+        hdf5_link(str(filename), self.name + "/x_cell_dofs", self.name + str(timestep) + "/x_cell_dofs")
+        hdf5_link(str(filename), self.name + "/cell_dofs", self.name + str(timestep) + "/cell_dofs")
+        hdf5_link(str(filename), self.name + "/cells", self.name + str(timestep) + "/cells")
         fieldfile.close()
 
     def _store_field_xdmf(
@@ -177,7 +177,8 @@ class Field(FieldBaseClass):
             fieldfile = self._datafile_cache[key]
         else:
             part_annotation = get_part_number(timestep, self._spec.num_steps_in_part)
-            filename = self.path / f"{self.name}_chk{part_annotation}.xdmf"
+            # filename = self.path / f"{self.name}_chk{part_annotation}.xdmf"
+            filename = self.path / f"{self.name}_chk.xdmf"
             fieldfile = dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename))
             # fieldfile.parameters["rewrite_function_mesh"] = rewrite_mesh
             # fieldfile.parameters["functions_share_mesh"] = share_mesh

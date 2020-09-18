@@ -99,7 +99,7 @@ class Loader(PostProcessorBaseClass):
 
         Optionally, return the corresponding time.
         """
-        # metadata = self.load_metadata(name)
+        metadata = self.load_metadata(name)
 
         _timestep_iterable = timestep_iterable
         timestep_iterable, time_iterable = self.load_time()
@@ -130,17 +130,18 @@ class Loader(PostProcessorBaseClass):
         V_space = dolfin.FunctionSpace(self.mesh, element)
         v_func = dolfin.Function(V_space)
 
-        filename = self._casedir / name / f"{name}_chk.xdmf"
-        # with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
-        with dolfin.XDMFFile(self.mesh.mpi_comm(), str(filename)) as fieldfile:
-            for i in _timestep_iterable:
-                # if i < int(metadata["start_timestep"]):
-                #     continue
-                # if i % int(metadata["stride_timestep"]) != 0:
-                #     continue
+        filename = self._casedir / name / f"{name}.hdf5"
+        with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
+        # with dolfin.XDMFFile(self.mesh.mpi_comm(), str(filename)) as fieldfile:
+            for savad_timestep_index, timestep in enumerate(_timestep_iterable):
+                if timestep < int(metadata["start_timestep"]):
+                    continue
+                if timestep % int(metadata["stride_timestep"]) != 0:
+                    continue
                 # assert False, (v_func, f"{name}", i)
-                fieldfile.read_checkpoint(v_func, f"{name}", i)
-                yield time_iterable[i], v_func
+                # fieldfile.read(v_func, f"{name}{i}/vector")
+                fieldfile.read(v_func, f"{name}{timestep}")
+                yield time_iterable[savad_timestep_index], v_func
 
     def load_checkpoint(
         self,
@@ -186,16 +187,16 @@ class Loader(PostProcessorBaseClass):
 
         for filename in filename_list:
             with dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename)) as fieldfile:
-                for i, _time in enumerate(_timestep_iterable):
-                    if _time < int(metadata["start_timestep"]):
+                for savad_timestep_index, timestep in enumerate(_timestep_iterable):
+                    if timestep < int(metadata["start_timestep"]):
                         continue
-                    if _time % int(metadata["stride_timestep"]) != 0:
+                    if timestep % int(metadata["stride_timestep"]) != 0:
                         continue
                     try:
-                        fieldfile.read_checkpoint(v_func, name, counter=i)
+                        fieldfile.read_checkpoint(v_func, name, counter=timestep)
                     except RuntimeError as e:
                         LOGGER.info(f"Could not read timestep: {e}")
-                    yield time_iterable[i], v_func
+                    yield time_iterable[savad_timestep_index], v_func
 
     @property
     def casedir(self) -> Path:
