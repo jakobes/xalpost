@@ -36,3 +36,5 @@ from .probe_points import (
 from .arg_utils import (
     store_arguments
 )
+
+from .initial_conditions import solve_IC
