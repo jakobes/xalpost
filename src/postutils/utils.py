@@ -71,7 +71,42 @@ def get_mesh(directory: Path, name: str) -> tp.Tuple[df.Mesh, df.MeshFunction, d
             infile.read(mvc)
             # infile.read(mvc, "tetra")
         cell_function = df.MeshFunction("size_t", mesh, mvc)
-    return mesh, cell_function
+
+    facet_function_name = directory / f"{name}_ff.xdmf"
+    if not facet_function_name.exists():
+        facet_function = None
+        logging.info(f"Could not read facet function, file '{facet_function_name} does not exist")
+    else:
+        mvc = df.MeshValueCollection("size_t", mesh, mesh.geometry().dim() - 1)
+        with df.XDMFFile(str(facet_function_name)) as infile:
+            infile.read(mvc)
+        facet_function = df.MeshFunction("size_t", mesh, mvc)
+    return mesh, cell_function, facet_function
+
+
+def save_mesh(
+    directory: Path,
+    name: str,
+    *,
+    mesh: tp.Optional[df.Mesh] = None,
+    cell_function: tp.Optional[df.MeshFunction] = None,
+    facet_function: tp.Optional[df.MeshFunction] = None
+) -> None:
+    if mesh is not None:
+        mesh_path = directory / f"{name}.xdmf"
+        logger.info(f"Saving mesh as {mesh_path}")
+        with df.XDMFFile(str(mesh_path)) as mesh_file:
+            mesh_file.write(mesh)
+    if cell_function is not None:
+        cell_path = directory / f"{name}_cf.xdmf"
+        logger.info(f"Saving cell_function as {cell_path}")
+        with df.XDMFFile(str(cell_path)) as cell_file:
+            cell_file.write(cell_function)
+    if facet_function is not None:
+        facet_path = directory / f"{name}_ff.xdmf"
+        logger.info(f"Saving facet_function as {facet_path}")
+        with df.XDMFFile(str(facet_path)) as facet_file:
+            facet_file.write(facet_function)
 
 
 def get_indicator_function(function_path: Path, mesh: df.Mesh, name: str = "indicator") -> df.Function:

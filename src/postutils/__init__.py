@@ -1,8 +1,8 @@
-from .utils import (
-    store_metadata,
+from .utils import ( store_metadata,
     load_metadata,
     import_fenicstools,
     get_mesh,
+    save_mesh,
     get_indicator_function,
     get_current_time_mpi,
     save_function,

@@ -10,12 +10,14 @@ from postutils import (
 
 class BoundaryField(Field):
     def __init__(self, name: str, spec: FieldSpec, mesh: df.Mesh):
+
         self._boundary_mesh = df.BoundaryMesh(mesh, "exterior")
         self._boundary_function_space = df.FunctionSpace(
             self._boundary_mesh,
-            spec.element_family,
-            spec.element_degree
+            "CG",
+            1
         )
+        self._data = df.Function(self._boundary_function_space)
         super().__init__(name, spec)
 
     def _save_bmesh(self):
@@ -43,15 +45,14 @@ class BoundaryField(Field):
             self._save_bmesh()
             store_metadata(self.path / "metadata_{name}.yaml".format(name=self.name), spec_dict)
 
-        # interpolate to boundary mesh
-        df.parameters["allow_extrapolation"] = True     # Necessary?
-        _data = df.interpolate(data, self._boundary_function_space)
+        df.LagrangeInterpolator.interpolate(self._data, data)
+        # _data = df.interpolate(data, self._boundary_function_space)
 
         if "hdf5" in self.spec.save_as:
-            self._store_field_hdf5(timestep, time, _data)
+            self._store_field_hdf5(timestep, time, self._data)
 
         if "xdmf" in self.spec.save_as:
-            self._store_field_xdmf(timestep, time, _data)
+            self._store_field_xdmf(timestep, time, self._data)
 
         if "checkpoint" in self.spec.save_as:
-            self._checkpoint(timestep, time, _data)
+            self._checkpoint(timestep, time, self._data)
