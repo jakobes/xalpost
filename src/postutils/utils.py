@@ -1,5 +1,4 @@
 """Utilities for storing metadata."""
-
 from pathlib import Path
 import typing as tp
 import dolfin as df
