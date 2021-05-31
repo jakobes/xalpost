@@ -47,16 +47,19 @@ class Loader(PostProcessorBaseClass):
     def set_mesh(self, mesh: df.Mesh) -> None:
         self.mesh = mesh
 
-    def load_mesh(self) -> dolfin.mesh:
+    def load_mesh(self, name: str = None) -> dolfin.mesh:
         """Load and return the mesh stored as xdmf."""
         if self.mesh is None:
             self.mesh = df.Mesh()
-            mesh_name = self._casedir / Path("mesh.xdmf")
+            if name is None:
+                mesh_name = self._casedir / Path("mesh.xdmf")
+            else:
+                mesh_name = self._casedir / Path(f"{name}.xdmf")
             with df.XDMFFile(str(mesh_name)) as infile:
                 infile.read(self.mesh)
         return self.mesh
 
-    def load_mesh_function(self, name: str) -> dolfin.MeshFunction:
+    def load_mesh_function(self, name: str, directory: Path = None) -> dolfin.MeshFunction:
         """Lead and return a mesh function.
 
         There are two options, 'cell_function' or 'facet_function'.
@@ -66,18 +69,25 @@ class Loader(PostProcessorBaseClass):
         """
         # TODO: I could use Enum rather than hard-coding names
         msg = "Meshfunctions are stored as 'cell_function' or 'facet_function'."
-        if not name in ("cell_function", "facet_function"):
-            raise ValueError(msg)
+        # if not name in ("cell_function", "facet_function"):
+        #     raise ValueError(msg)
 
         self.load_mesh()        # Method tests if mesh is already loaded
 
         dimension = self.mesh.geometry().dim()      # if cell function
-        if name == "facet_function":
+        if name == "facet_function" or name[-3:] == "_ff":
             dimension -= 1      # dimension is one less
 
         # mvc = df.MeshValueCollection("size_t", self.mesh, dimension)
         cell_function = df.MeshFunction("size_t", self.mesh, dimension)
-        with df.XDMFFile(str(self._casedir / f"{name}.xdmf")) as infile:
+
+        _directory = self._casedir
+        if directory is not None:
+            _directory = Path(directory)
+        infile_name = _directory / f"{name}.xdmf"
+        if not infile_name.exists():
+            raise RuntimeError(f"Mesh function {infile_name} does not exist")
+        with df.XDMFFile(str(infile_name)) as infile:
             infile.read(cell_function)
             # infile.read(mvc)
         # cell_function = df.MeshFunction("size_t", self.mesh, mvc)
@@ -181,12 +191,7 @@ class Loader(PostProcessorBaseClass):
         if _filename.exists():
             filename_list = [_filename]
         else:
-            filename_list = []
-            filename_directory = self.casedir / Path(f"{name}")
-            for _file in filter(lambda x: x.suffix == ".xdmf", filename_directory.iterdir()):
-                if "_chk_part" in _file.stem:
-                    LOGGER.info(f"loading file {_file}")
-                    filename_list.append(_file)
+            assert False, f"Could not open {_filename}"
 
         previous_timestep = -100
         for filename in filename_list:
