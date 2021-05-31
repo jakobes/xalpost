@@ -153,6 +153,9 @@ class Loader(PostProcessorBaseClass):
 
         _timestep_iterable = timestep_iterable
         timestep_iterable, time_iterable = self.load_time()
+
+        # from IPython import embed; embed()
+        # assert False
         if _timestep_iterable is None:
             _timestep_iterable = timestep_iterable
 
@@ -185,9 +188,13 @@ class Loader(PostProcessorBaseClass):
                     LOGGER.info(f"loading file {_file}")
                     filename_list.append(_file)
 
+        previous_timestep = -100
         for filename in filename_list:
             with dolfin.XDMFFile(dolfin.MPI.comm_world, str(filename)) as fieldfile:
                 for savad_timestep_index, timestep in enumerate(_timestep_iterable):
+                    if timestep == previous_timestep:
+                        continue
+                    previous_timestep = timestep
                     if timestep < int(metadata["start_timestep"]):
                         continue
                     if timestep % int(metadata["stride_timestep"]) != 0:
