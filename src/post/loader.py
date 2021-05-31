@@ -113,8 +113,9 @@ class Loader(PostProcessorBaseClass):
 
         _timestep_iterable = timestep_iterable
         timestep_iterable, time_iterable = self.load_time()
+        time_iterable = np.unique(time_iterable)
         if _timestep_iterable is None:
-            _timestep_iterable = timestep_iterable
+            _timestep_iterable = np.unique(timestep_iterable)
         if self.mesh is None:
             self.mesh = self.load_mesh()
 
