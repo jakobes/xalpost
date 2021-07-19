@@ -117,21 +117,13 @@ class Field(FieldBaseClass):
     ) -> None:
         """Save as hdf5."""
         _key = "hdf5"
-        part_annotation = get_part_number(timestep, self._spec.num_steps_in_part)
-        filename = self.path / f"{self.name}{part_annotation}.hdf5"
+        filename = self.path / f"{self.name}.hdf5"
         if filename.exists():
             fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "a")
         else:
             fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w")
 
-        # Store the function space information once
-        # if not fieldfile.has_dataset(self.name):
-        #     fieldfile.write(data, self.name)
-
-        # if not fieldfile.has_dataset("mesh"):
-        #     fieldfile.write(data.function_space().mesh(), "mesh")
-
-        fieldfile.write(data, self.name)
+        fieldfile.write(data, self.name, time)
         fieldfile.close()
 
     def _store_field_xdmf(

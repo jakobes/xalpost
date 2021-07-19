@@ -151,7 +151,7 @@ class Loader(PostProcessorBaseClass):
                     continue
                 # assert False, (v_func, f"{name}", i)
                 # fieldfile.read(v_func, f"{name}{i}/vector")
-                fieldfile.read(v_func, f"{name}{timestep}")
+                fieldfile.read(v_func, f"{name}/vector_{timestep}")
                 yield time_iterable[savad_timestep_index], v_func
 
     def load_checkpoint(
