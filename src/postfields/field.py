@@ -125,18 +125,13 @@ class Field(FieldBaseClass):
             fieldfile = dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "w")
 
         # Store the function space information once
-        if not fieldfile.has_dataset(self.name):
-            fieldfile.write(data, self.name)
+        # if not fieldfile.has_dataset(self.name):
+        #     fieldfile.write(data, self.name)
 
-        if not fieldfile.has_dataset("mesh"):
-            fieldfile.write(data.function_space().mesh(), "mesh")
+        # if not fieldfile.has_dataset("mesh"):
+        #     fieldfile.write(data.function_space().mesh(), "mesh")
 
-        fieldfile.write(data.vector(), self.name + str(timestep) + "/vector")
-
-        # Link information about function space from hash-dataset
-        hdf5_link(str(filename), self.name + "/x_cell_dofs", self.name + str(timestep) + "/x_cell_dofs")
-        hdf5_link(str(filename), self.name + "/cell_dofs", self.name + str(timestep) + "/cell_dofs")
-        hdf5_link(str(filename), self.name + "/cells", self.name + str(timestep) + "/cells")
+        fieldfile.write(data, self.name)
         fieldfile.close()
 
     def _store_field_xdmf(

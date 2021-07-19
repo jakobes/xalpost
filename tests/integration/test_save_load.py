@@ -36,7 +36,7 @@ def test_save_load():
         casedir = Path(tmpdirname) / "test_pp_casedir"
 
         # Setup saver
-        field_spec = FieldSpec(stride_timestep=1)
+        field_spec = FieldSpec(stride_timestep=1, save_as=("checkpoint", "hdf5"))
         saver_spec = SaverSpec(casedir=str(casedir))
         saver = Saver(saver_spec)
 
@@ -67,8 +67,13 @@ def test_save_load():
         assert np.sum(solver.cell_function.array() - loaded_cell_function.array()) == 0
         assert np.sum(solver.facet_function.array() - loaded_facet_function.array()) == 0
 
-        # Compare functions and time
+        # Compare functions and time checkpoint
         for timestep, (loaded_t, loaded_u) in enumerate(loader.load_checkpoint("u")):
+            diff = np.sum(time_func_dict[timestep].vector().get_local() - loaded_u.vector().get_local())
+            assert diff == 0, diff
+
+        # Compare functions and time hdf5
+        for timestep, (loaded_t, loaded_u) in enumerate(loader.load_field("u")):
             diff = np.sum(time_func_dict[timestep].vector().get_local() - loaded_u.vector().get_local())
             assert diff == 0, diff
 
