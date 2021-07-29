@@ -1,8 +1,8 @@
 """Load a casedir."""
 
+import h5py
 import dolfin
 import logging
-# import h5py
 
 import numpy as np
 import dolfin as df
@@ -142,16 +142,25 @@ class Loader(PostProcessorBaseClass):
         v_func = dolfin.Function(V_space)
 
         filename = self._casedir / name / f"{name}.hdf5"
+
+        h5file = h5py.File(str(filename), "r")
+        data_group = h5file[name]
+        h5_timestep_list = sorted(list(
+            map(lambda x: int(x.split("_")[-1]), filter(lambda x: "vector_" in x, data_group.keys()))
+        ))
+
+        saved_h5_index = 0
         with dolfin.HDF5File(dolfin.MPI.comm_world, str(filename), "r") as fieldfile:
-        # with dolfin.XDMFFile(self.mesh.mpi_comm(), str(filename)) as fieldfile:
+            # from IPython import embed; embed()
+            # assert False
             for savad_timestep_index, timestep in enumerate(_timestep_iterable):
                 if timestep < int(metadata["start_timestep"]):
                     continue
                 if timestep % int(metadata["stride_timestep"]) != 0:
                     continue
-                # assert False, (v_func, f"{name}", i)
-                # fieldfile.read(v_func, f"{name}{i}/vector")
-                fieldfile.read(v_func, f"{name}/vector_{timestep}")
+                fieldfile.read(v_func, f"{name}/vector_{h5_timestep_list[saved_h5_index]}")
+                saved_h5_index += 1
+                # fieldfile.read(v_func, f"{name}/vector_{timestep}")
                 yield time_iterable[savad_timestep_index], v_func
 
     def load_checkpoint(

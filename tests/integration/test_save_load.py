@@ -1,4 +1,5 @@
 """Test that we can load the saved data, and get everything back."""
+import h5py
 import tempfile
 
 import numpy as np
