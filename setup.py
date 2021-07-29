@@ -12,5 +12,6 @@ setup(
         "numpy>=1.18.1",
         "pyyaml",
         "scipy",
+        "h5py",
     ]
 )
