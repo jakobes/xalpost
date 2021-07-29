@@ -43,7 +43,7 @@ jobs:
       - run:
           name: Import xalbrain first time (JIT)
           command: |
-            python3 -c "import post"
+            python3 -c "import h5py; import post"
 
       - run:
           name: Unit tests
