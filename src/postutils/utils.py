@@ -68,6 +68,8 @@ def get_mesh(
     if cell_function_name is None:
         cell_function_name = f"{name}_cf.xdmf"
     _cell_function_name = directory / cell_function_name
+    if not _cell_function_name.suffix == ".xdmf":
+        _cell_function_name = Path(f"{_cell_function_name}.xdmf")
     if not _cell_function_name.exists():
         cell_function = None
         logging.info(f"Could not read cell function, file '{_cell_function_name} does not exist")
@@ -81,6 +83,8 @@ def get_mesh(
     if facet_function_name is None:
         facet_function_name = f"{name}_ff.xdmf"
     _facet_function_name = directory / facet_function_name
+    if not _facet_function_name.suffix == ".xdmf":
+        _facet_function_name = Path(f"{_facet_function_name}.xdmf")
     if not _facet_function_name.exists():
         facet_function = None
         logging.info(f"Could not read facet function, file '{_facet_function_name} does not exist")
