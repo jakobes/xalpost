@@ -54,30 +54,39 @@ def import_fenicstools() -> tp.Any:
     return fenicstools
 
 
-def get_mesh(directory: Path, name: str) -> tp.Tuple[df.Mesh, df.MeshFunction, df.MeshFunction]:
+def get_mesh(
+    directory: Path,
+    name: str,
+    facet_function_name: str = None,
+    cell_function_name: str = None
+) -> tp.Tuple[df.Mesh, df.MeshFunction, df.MeshFunction]:
     mesh = df.Mesh()
     mesh_name = str(directory / f"{name}.xdmf")
     with df.XDMFFile(mesh_name) as infile:
         infile.read(mesh)
 
-    cell_function_name = directory / f"{name}_cf.xdmf"
+    if cell_function_name is None:
+        cell_function_name = f"{name}_cf.xdmf"
+    _cell_function_name = directory / cell_function_name
     if not cell_function_name.exists():
         cell_function = None
-        logging.info(f"Could not read cell function, file '{cell_function_name} does not exist")
+        logging.info(f"Could not read cell function, file '{_cell_function_name} does not exist")
     else:
         mvc = df.MeshValueCollection("size_t", mesh, mesh.geometry().dim())
-        with df.XDMFFile(str(cell_function_name)) as infile:
+        with df.XDMFFile(str(_cell_function_name)) as infile:
             infile.read(mvc)
             # infile.read(mvc, "tetra")
         cell_function = df.MeshFunction("size_t", mesh, mvc)
 
-    facet_function_name = directory / f"{name}_ff.xdmf"
-    if not facet_function_name.exists():
+    if facet_function_name is None:
+        facet_function_name = f"{name}_ff.xdmf"
+    _facet_function_name = directory / facet_function_name
+    if not _facet_function_name.exists():
         facet_function = None
-        logging.info(f"Could not read facet function, file '{facet_function_name} does not exist")
+        logging.info(f"Could not read facet function, file '{_facet_function_name} does not exist")
     else:
         mvc = df.MeshValueCollection("size_t", mesh, mesh.geometry().dim() - 1)
-        with df.XDMFFile(str(facet_function_name)) as infile:
+        with df.XDMFFile(str(_facet_function_name)) as infile:
             infile.read(mvc)
         facet_function = df.MeshFunction("size_t", mesh, mvc)
     return mesh, cell_function, facet_function
