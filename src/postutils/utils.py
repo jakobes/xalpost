@@ -154,10 +154,10 @@ def save_function(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if format == "checkpoint":
-        with df.XDMFFile(str(output_path)) as xdmf:
+        with df.XDMFFile(f"{output_path}.xdmf") as xdmf:
             xdmf.write_checkpoint(indicator_function, name, 0)
-    elif format == "hdf5":        
-        with df.HDF5File(df.MPI.comm_world, str(output_path), "w") as hdf5:
+    elif format == "hdf5":
+        with df.HDF5File(df.MPI.comm_world, f"{output_path}.hdf5", "w") as hdf5:
             hdf5.write(indicator_function, name, 0)
 
 
