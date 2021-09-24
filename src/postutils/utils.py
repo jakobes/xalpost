@@ -143,7 +143,8 @@ def get_current_time_mpi() -> datetime.datetime:
 def save_function(
     indicator_function: df.Function,
     output_path: Path,
-    name: tp.Optional[str] = None
+    name: tp.Optional[str] = None,
+    format : str = "checkpoint"
 ) -> None:
     """Save a dolfin function as xdmf checkpoint for reading and visualisation."""
     if name is None:
@@ -151,8 +152,13 @@ def save_function(
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with df.XDMFFile(str(output_path)) as xdmf:
-        xdmf.write_checkpoint(indicator_function, name, 0)
+
+    if format == "checkpoint":
+        with df.XDMFFile(str(output_path)) as xdmf:
+            xdmf.write_checkpoint(indicator_function, name, 0)
+    elif format == "hdf5":        
+        with df.HDF5File(df.MPI.comm_world, str(output_path), "w") as hdf5:
+            hdf5.write(indicator_function, name, 0)
 
 
 def read_function(
