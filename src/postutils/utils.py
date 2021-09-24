@@ -172,8 +172,12 @@ def read_function(
     function_space = df.FunctionSpace(mesh, function_space_type, 1)    # FIXME: I believe it is CG and not DG
     function = df.Function(function_space)
 
-    with df.XDMFFile(str(name)) as xdmf:
-        xdmf.read_checkpoint(function, function_name, 0)
+    if name.suffix == ".xdmf":
+        with df.XDMFFile(str(name)) as xdmf:
+            xdmf.read_checkpoint(function, function_name, 0)
+    elif name.suffix == "hdf5":
+        with df.HDF5File(df.MPI.comm_world, str(name), "r") as hdf5:
+            hdf5.read(function, f"funcvtion_name", 0)
     return function
 
 
